@@ -2051,6 +2051,7 @@ c
         end do ! n
       end if ! l_sdata
 c JAF
+      if(id.eq.1) go to 1100
 c
 c----------------------------------------------------
 c output this (alpha,n) neutron spectrum contribution
