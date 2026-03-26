@@ -2558,7 +2558,7 @@ c JAF bug. initialize dummy3.
       if(isfnq.gt.0) itest=itest+1
       if(idnnq.gt.0) itest=itest+1
       if(itest.lt.2) then
-        
+
 c JAF bug. initialize dummy.
         dummy=0.
         do 1405 n=1,nng
@@ -2568,6 +2568,7 @@ c never gets here?)
 c         ts(n)=ts(n)/gttqan
           if(gttqan.ne.0.)ts(n)=ts(n)/gttqan
  1405   gtmg=gtmg+ts(n)
+        gtq=gttqan
         go to 1430
       endif
 
