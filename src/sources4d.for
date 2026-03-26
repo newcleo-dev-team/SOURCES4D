@@ -2254,7 +2254,7 @@ c       stop 'S.F. source nuclide not found on tape5'
 c JAF bug--weird things happen to s.f. summary if no (alpha,n).
 c   possibly fixed with "isfnq=isfnq+1" after 1210. check this.
  1210   continue
-c       isfnq=isfnq+1
+        if (nt.eq.0) isfnq=isfnq+1
         qsf=aq(k)*alam*bfsf*barnu
         if(qsf.le.0.) go to 1250
         ebar=0.25*a*a*b + 1.5*a
