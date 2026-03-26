@@ -2566,9 +2566,22 @@ c JAF bug. initialize dummy.
 c JAF bug fix: gttqan is 0 if no (alpha,n) (or maybe the code
 c never gets here?)
 c         ts(n)=ts(n)/gttqan
-          if(gttqan.ne.0.)ts(n)=ts(n)/gttqan
+          if(gttqan.ne.0.) then
+            ts(n)=ts(n)/gttqan
+          elseif(totqsf.ne.0) then
+            ts(n)=ts(n)/totqsf   
+          elseif(totqnd.ne.0) then
+            ts(n)=ts(n)/totqnd
+          endif 
  1405   gtmg=gtmg+ts(n)
-        gtq=gttqan
+ 
+        if(gttqan.ne.0.) then
+          gtq=gttqan      
+        elseif(totqsf.ne.0) then
+            gtq=totqsf 
+        elseif(totqnd.ne.0) then
+          gtq=totqnd
+        endif
         go to 1430
       endif
 
