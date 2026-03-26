@@ -2558,19 +2558,17 @@ c JAF bug. initialize dummy3.
       if(isfnq.gt.0) itest=itest+1
       if(idnnq.gt.0) itest=itest+1
       if(itest.lt.2) then
-c JAF remove dummy; it is unused and immediately set to 0 in the
-c next section.
+        
 c JAF bug. initialize dummy.
-c       dummy=0.
+        dummy=0.
         do 1405 n=1,nng
-c         dummy=dummy+ts(n)
+          dummy=dummy+ts(n)
 c JAF bug fix: gttqan is 0 if no (alpha,n) (or maybe the code
 c never gets here?)
 c         ts(n)=ts(n)/gttqan
           if(gttqan.ne.0.)ts(n)=ts(n)/gttqan
  1405   gtmg=gtmg+ts(n)
-c JAF bug fix: why go to 1430?
-c       go to 1430
+        go to 1430
       endif
 
 c------------------------------------------------------------
