@@ -2228,10 +2228,36 @@ c JAF bug. initialize dummy1.
       write(8,2090)
 
 c-----------------------------
+c calculate number of spontaneus fission
+c and delayed neutrons sources if nt=0
+c-----------------------------
+1140  if(nt.eq.0) then
+      rewind 5
+ 1136 read (5,10) icont
+      if (icont.ne.0) go to 1136
+      do 1137 k=1,nq
+ 1138   read (5,110,end=1144) idq,nal,ndn
+ 1139   read (5,60) alam,bfsf,barnu,a,b,bfdn
+        if (nal.eq.0) go to 1141
+        read (5,120) (eal(l),fal(l),l=1,nal)
+ 1141   if (ndn.eq.0) go to 1142
+        read (5,120) (fdng(nd),nd=1,ndn)
+ 1142   if (idq-jq(k)) 1138,1143,1144
+ 1144   write (6,160) jq(k)
+c JAF no need to stop
+c       stop 'S.F. source nuclide not found on tape5'
+        cycle
+ 1143   continue
+        if(bfsf.gt.0) isfnq=isfnq+1
+        if(bfdn.gt.0) idnnq=idnnq+1
+ 1137   continue
+      endif
+
+c-----------------------------
 c calculate s.f. neutron source
 c-----------------------------
- 1140 if (idd.eq.3) go to 1400
-      if (isfnq.eq.0.and.nt.gt.0) go to 1260
+      if (idd.eq.3) go to 1400
+      if (isfnq.eq.0) go to 1260
       rewind 5
  1150 read (5,10) icont
       if (icont.ne.0) go to 1150
@@ -2256,7 +2282,6 @@ c   possibly fixed with "isfnq=isfnq+1" after 1210. check this.
  1210   continue
         qsf=aq(k)*alam*bfsf*barnu
         if(qsf.le.0.) go to 1250
-        if (nt.eq.0) isfnq=isfnq+1
         ebar=0.25*a*a*b + 1.5*a
         etopsf=etopsf+ebar*qsf
         ebotsf=ebotsf+qsf
@@ -2394,7 +2419,7 @@ c JAF bug. initialize dummy2.
 c----------------------------------
 c calculate delayed neutron sources
 c----------------------------------
- 1260 if (idnnq.eq.0.and.nt.gt.0) go to 1400
+ 1260 if (idnnq.eq.0) go to 1400
       rewind 5
       totqdn=0.
       if (id.eq.1) go to 1280
@@ -2422,7 +2447,6 @@ c       stop 'D.N. source nuclide not found on tape5'
         etpdnq=0.
         ebtdnq=0.
         if(qdn.le.0.) go to 1390
-        if (nt.eq.0) idnnq=idnnq+1
         totqdn=totqdn+qdn
         lzq=idq/10000
         laq=idq/10-lzq*1000
