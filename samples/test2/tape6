@@ -128,7 +128,7 @@ Title: Sample 2 - Uranyl-Flouride Solution
 
 
          source  source atoms  dk constant  sf decay    nu    neutrons
-        nuclide    per cm**3    (/second)   branching   bar   sec/cm**3
+        nuclide        per cm**3    (/second)   branching   bar   sec/cm**3
 +       _______  ____________  ___________  _________  _____  ____________
           u234    1.3200E+17   8.9800E-14   1.640E-11  1.810  3.518619E-07
           u235    2.1100E+20   3.1209E-17   7.000E-11  1.860  8.573744E-07

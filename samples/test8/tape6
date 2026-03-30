@@ -64,7 +64,7 @@ Title: M&C 2019 test problem material
 
 
          source  source atoms  dk constant  sf decay    nu    neutrons
-        nuclide    per cm**3    (/second)   branching   bar   sec/cm**3
+        nuclide        per cm**3    (/second)   branching   bar   sec/cm**3
 +       _______  ____________  ___________  _________  _____  ____________
          pu239    4.4438E+22   9.1103E-13   3.000E-12  2.160  2.623397E-01
          pu242    9.7525E+20   5.8370E-14   5.540E-06  2.150  6.780426E+02
