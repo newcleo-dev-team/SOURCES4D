@@ -1,0 +1,13 @@
+SOURCES 4D Calculation
+<<<<<<<<<<<>>>>>>>>>>>
+
+
+ 
+Title: Sample 1 - PuBe13 Source (Stewart, 1953)                                     
+Homogeneous problem input (idd = 1)
+ 
+
+number of stopping elems:     2
+number of sources input:      6
+number of targets input:      0
+in this file, i is targets, j is stopping elements, k is sources, l is alpha levels
