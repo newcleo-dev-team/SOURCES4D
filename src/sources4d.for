@@ -2582,33 +2582,6 @@ c JAF bug. initialize dummy3.
       if(nt.gt.0) itest=1
       if(isfnq.gt.0) itest=itest+1
       if(idnnq.gt.0) itest=itest+1
-      if(itest.lt.2) then
-
-c JAF bug. initialize dummy.
-        dummy=0.
-        do 1405 n=1,nng
-          dummy=dummy+ts(n)
-c JAF bug fix: gttqan is 0 if no (alpha,n) (or maybe the code
-c never gets here?)
-c         ts(n)=ts(n)/gttqan
-          if(gttqan.ne.0.) then
-            ts(n)=ts(n)/gttqan
-          elseif(totqsf.ne.0) then
-            ts(n)=ts(n)/totqsf   
-          elseif(totqnd.ne.0) then
-            ts(n)=ts(n)/totqnd
-          endif 
- 1405   gtmg=gtmg+ts(n)
- 
-        if(gttqan.ne.0.) then
-          gtq=gttqan      
-        elseif(totqsf.ne.0) then
-            gtq=totqsf 
-        elseif(totqnd.ne.0) then
-          gtq=totqnd
-        endif
-        go to 1430
-      endif
 
 c------------------------------------------------------------
 c output grand total (alpha,n) + s.f. + d.n. neutron spectrum
