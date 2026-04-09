@@ -330,8 +330,10 @@ c----------------------
 c  Common Data Storage
 c----------------------
       character title*7,jsm(105)*2
+      character(len=256) :: line
       real amass
-      integer erg, id, idd, ios, nerr
+      integer erg, id, idd, ios, nerr, sens
+      logical sensitivity
       dimension title(11), amass(105)
       common /names/ jsm
       common /masses/ amass
@@ -383,14 +385,29 @@ c-----------------
 c------------------
 c  Read From Tape1
 c------------------
+      sens=0
       read (1,17,end=99) title
-      read(1,*)idd,id,erg
+      read(1,'(A)',iostat=ios)line
+      if (ios /= 0) then
+        stop "Error in input"
+      endif
+      read(line,*,iostat=ios)idd,id,erg,sens
+      if (ios/=0) then
+        read(line,*,iostat=ios)idd,id,erg
+      endif
+      if (sens.eq.0) then
+        sensitivity = .false.
+      else if (sens.eq.1) then
+        sensitivity = .true.
+      else
+        stop 'Error in sensitivity input'
+      endif
       if (idd.eq.1) then
-       call homog(title,idd,id,erg)
+       call homog(title,idd,id,erg,sensitivity)
       elseif (idd.eq.2) then
        call interf(title,idd,id,erg)
       elseif (idd.eq.3) then
-       call homog(title,idd,id,erg)
+       call homog(title,idd,id,erg,sensitivity)
       elseif (idd.eq.4) then
        call three(title,idd,id,erg)
       else
@@ -422,8 +439,13 @@ c-------------------------
       endif
 c JAF for derivatives
       if(idd.eq.1.or.idd.eq.3)then
-        close(unit=13)
-        close(unit=14)
+        if(sensitivity)then
+          close(unit=13)
+          close(unit=14)
+        else
+          close(unit=13, status='delete')
+          close(unit=14, status='delete')
+        endif
       else
         close(unit=13, status='delete')
         close(unit=14, status='delete')
@@ -447,7 +469,7 @@ c=======================================================================
 c  Homogeneous Problem Subroutine (6/97)
 c=======================================================================
 
-      subroutine homog(title,idd,id,erg)
+      subroutine homog(title,idd,id,erg,sensitivity)
 
 
 
@@ -799,13 +821,6 @@ c-----------------------------------
         write(11,2040)idd
       elseif (idd.eq.3) then
         write(11,2047)idd
-      endif
-      if (sens.eq.0) then
-        sensitivity = .false.
-      else if (sens.eq.1) then
-        sensitivity = .true.
-      else
-        stop 'Error in sensitivity input'
       endif
 c JAF for derivatives (12 lines)
       if(sensitivity)then
