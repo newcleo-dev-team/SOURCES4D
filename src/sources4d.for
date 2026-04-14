@@ -5047,7 +5047,8 @@ c--------------------------------------------------------------
        title1(10)='duction'
 c JAF pass in maxnag
        call neutron(title1,ntb,idb,atb,jp,ep,f,lzt,lat,lst,amt,el,
-     1 apro,q,e,x,nzb,jzb,azb,czb,jps,jl,astab,nstabb,naga,erg,maxnag)
+     1 apro,q,e,x,nzb,jzb,azb,czb,jps,jl,astab,nstabb,naga,erg,maxnag,
+     2 ee, cg, eal, nq)
 
 c--------------------------------------------------------------
 c   Calculate neutron source from bc interface due to region B
@@ -5064,7 +5065,8 @@ c--------------------------------------------------------------
        title1(10)='duction'
 c JAF pass in maxnag
        call neutron(title1,ntb,idb,atb,jp,ep,f,lzt,lat,lst,amt,el,
-     1 apro,q,e,x,nzb,jzb,azb,czb,jps,jl,astbc,nstbcb,nagb,erg,maxnag)
+     1 apro,q,e,x,nzb,jzb,azb,czb,jps,jl,astbc,nstbcb,nagb,erg,maxnag,
+     2 ee, cg, eal, nq)
       endif
 
 c--------------------------------------------------------------
@@ -5083,7 +5085,7 @@ c--------------------------------------------------------------
 c JAF pass in maxnag
       call neutron(title1,ntc,idc,atc,jpc,epc,fc,lztc,latc,lstc,amtc,
      1 elc,aproc,qc,ec,xc,nzc,jzc,azc,czc,jpsc,jlc,astbc,nstbcc,nagb,
-     2 erg,maxnag)
+     2 erg,maxnag, ee, cg, eal, nq)
 
 c----------------------------------
 c   Calculate total neutron source
@@ -5272,7 +5274,8 @@ c  Three Region Problem Neutron Source Subroutine (1/99)
 c=======================================================================
 
       subroutine neutron(title,nt,idt,at,jp,ep,f,lzt,lat,lst,amt,el,
-     1 apro,q,e,x,nz,jz,az,cz,jps,jl,ast,gtsan,nal,erg,maxnag)
+     1 apro,q,e,x,nz,jz,az,cz,jps,jl,ast,gtsan,nal,erg,maxnag, ee, 
+     2 cg, eal, nq)
 
 c----------
 c  Storage
