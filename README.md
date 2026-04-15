@@ -4,11 +4,9 @@ SOURCES is a code for computing neutron source rates and spectra from spontaneou
 
 SOURCES4D has been built and tested only on a Linux platform with an Intel FORTRAN compiler.
 
-# Directory Contents
+## Directory Contents
 
 src--source code
-
-bin--executable code
 
 data--data files
 
@@ -24,15 +22,30 @@ User manual describing the new features in SOURCES4D.
 - mc2019.proc_v_n_pp2335-2347.pdf
 > Jeffrey A. Favorite, “Second Derivative of an (alpha,n) Neutron Source with Respect to Constituent Isotope Densities,” _Proceedings of the International Conference on Mathematics and Computational Methods Applied to Nuclear Science and Engineering (M&C 2019)_, 2335–2347, Portland, Oregon, August 25–29, 2019.
 
-samples--8 test inputs and outputs and utility scripts
+samples--10 test inputs and outputs and utility scripts
 
-# Copyright
+## How to install
+
+To clone this repository and build the executable, please type the following commands:
+```bash
+git clone https://github.com/lanl/SOURCES4D.git
+cd SOURCES4D
+make
+```
+
+## Usage
+
+For usage instruction, refer to the manual included in the `docs` folder.
+
+The latest version of the code introduces an additional input parameter to enable or disable the sensitivity calculation. This parameter must be added in `card 2`, after the `idd`, `id`, `erg` parameters. It accepts two values: `0` to disable the sensitivity calculation and `1` to enable it. To ensure compatibility with older inputs, this parameter is optional and, if omitted, it defaults to `0`. The sensitivity calculation is only available for the homogeneous configuration and for the alpha beam configuration.
+
+## Copyright
 
 © 2024. Triad National Security, LLC. All rights reserved.
 
 This program was produced under U.S. Government contract 89233218CNA000001 for Los Alamos National Laboratory (LANL), which is operated by Triad National Security, LLC for the U.S. Department of Energy/National Nuclear Security Administration. All rights in the program are reserved by Triad National Security, LLC, and the U.S. Department of Energy/National Nuclear Security Administration. The Government is granted for itself and others acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license in this material to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so. 
 
-# License
+## License
 
 GPLv3
 This software is open source under the GNU General Public License ; either version 3.0 of the License, or (at your option) any later version
