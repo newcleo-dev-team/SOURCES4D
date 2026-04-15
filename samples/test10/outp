@@ -1,0 +1,256 @@
+SOURCES 4D Calculation
+<<<<<<<<<<<>>>>>>>>>>>
+
+
+
+                      Summary of Input
+                      ================
+ 
+Title: Three-Region Interface Problem Am-CO2-Lexan                                  
+
+Three region problem input (idd = 4)
+Magnitudes and spectra computed.
+ 
+ 2000 alpha energy groups used at each interface.
+Maximum energy for alpha spectra:  6.500E+00 MeV.
+Minimum energy for alpha spectra:  1.000E-07 MeV.
+ 
+Number of neutron spectrum energy groups:  20
+Maximum neutron energy is  1.00000E+01 MeV.
+Minimum neutron energy is  0.00000E+00 MeV.
+ 
+Neutron Energy Group Structure:
+ 
+  Group    Upper-Bound    Lower-Bound
+  -----    -----------    -----------
+     1     1.00000E+01    9.50000E+00
+     2     9.50000E+00    9.00000E+00
+     3     9.00000E+00    8.50000E+00
+     4     8.50000E+00    8.00000E+00
+     5     8.00000E+00    7.50000E+00
+     6     7.50000E+00    7.00000E+00
+     7     7.00000E+00    6.50000E+00
+     8     6.50000E+00    6.00000E+00
+     9     6.00000E+00    5.50000E+00
+    10     5.50000E+00    5.00000E+00
+    11     5.00000E+00    4.50000E+00
+    12     4.50000E+00    4.00000E+00
+    13     4.00000E+00    3.50000E+00
+    14     3.50000E+00    3.00000E+00
+    15     3.00000E+00    2.50000E+00
+    16     2.50000E+00    2.00000E+00
+    17     2.00000E+00    1.50000E+00
+    18     1.50000E+00    1.00000E+00
+    19     1.00000E+00    5.00000E-01
+    20     5.00000E-01    0.00000E+00
+ 
+Number of angular groups: 100
+ 
+Angular Group Structure:
+
+  Group    Upper-Bound    Lower-Bound
+  -----    -----------    -----------
+     1     1.57080E-02    0.00000E+00
+     2     3.14159E-02    1.57080E-02
+     3     4.71239E-02    3.14159E-02
+     4     6.28319E-02    4.71239E-02
+     5     7.85398E-02    6.28319E-02
+     6     9.42478E-02    7.85398E-02
+     7     1.09956E-01    9.42478E-02
+     8     1.25664E-01    1.09956E-01
+     9     1.41372E-01    1.25664E-01
+    10     1.57080E-01    1.41372E-01
+    11     1.72788E-01    1.57080E-01
+    12     1.88496E-01    1.72788E-01
+    13     2.04204E-01    1.88496E-01
+    14     2.19911E-01    2.04204E-01
+    15     2.35619E-01    2.19911E-01
+    16     2.51327E-01    2.35619E-01
+    17     2.67035E-01    2.51327E-01
+    18     2.82743E-01    2.67035E-01
+    19     2.98451E-01    2.82743E-01
+    20     3.14159E-01    2.98451E-01
+    21     3.29867E-01    3.14159E-01
+    22     3.45575E-01    3.29867E-01
+    23     3.61283E-01    3.45575E-01
+    24     3.76991E-01    3.61283E-01
+    25     3.92699E-01    3.76991E-01
+    26     4.08407E-01    3.92699E-01
+    27     4.24115E-01    4.08407E-01
+    28     4.39823E-01    4.24115E-01
+    29     4.55531E-01    4.39823E-01
+    30     4.71239E-01    4.55531E-01
+    31     4.86947E-01    4.71239E-01
+    32     5.02655E-01    4.86947E-01
+    33     5.18363E-01    5.02655E-01
+    34     5.34071E-01    5.18363E-01
+    35     5.49779E-01    5.34071E-01
+    36     5.65487E-01    5.49779E-01
+    37     5.81195E-01    5.65487E-01
+    38     5.96903E-01    5.81195E-01
+    39     6.12611E-01    5.96903E-01
+    40     6.28319E-01    6.12611E-01
+    41     6.44026E-01    6.28319E-01
+    42     6.59734E-01    6.44026E-01
+    43     6.75442E-01    6.59734E-01
+    44     6.91150E-01    6.75442E-01
+    45     7.06858E-01    6.91150E-01
+    46     7.22566E-01    7.06858E-01
+    47     7.38274E-01    7.22566E-01
+    48     7.53982E-01    7.38274E-01
+    49     7.69690E-01    7.53982E-01
+    50     7.85398E-01    7.69690E-01
+    51     8.01106E-01    7.85398E-01
+    52     8.16814E-01    8.01106E-01
+    53     8.32522E-01    8.16814E-01
+    54     8.48230E-01    8.32522E-01
+    55     8.63938E-01    8.48230E-01
+    56     8.79646E-01    8.63938E-01
+    57     8.95354E-01    8.79646E-01
+    58     9.11062E-01    8.95354E-01
+    59     9.26770E-01    9.11062E-01
+    60     9.42478E-01    9.26770E-01
+    61     9.58186E-01    9.42478E-01
+    62     9.73894E-01    9.58186E-01
+    63     9.89602E-01    9.73894E-01
+    64     1.00531E+00    9.89602E-01
+    65     1.02102E+00    1.00531E+00
+    66     1.03673E+00    1.02102E+00
+    67     1.05243E+00    1.03673E+00
+    68     1.06814E+00    1.05243E+00
+    69     1.08385E+00    1.06814E+00
+    70     1.09956E+00    1.08385E+00
+    71     1.11527E+00    1.09956E+00
+    72     1.13097E+00    1.11527E+00
+    73     1.14668E+00    1.13097E+00
+    74     1.16239E+00    1.14668E+00
+    75     1.17810E+00    1.16239E+00
+    76     1.19381E+00    1.17810E+00
+    77     1.20951E+00    1.19381E+00
+    78     1.22522E+00    1.20951E+00
+    79     1.24093E+00    1.22522E+00
+    80     1.25664E+00    1.24093E+00
+    81     1.27235E+00    1.25664E+00
+    82     1.28805E+00    1.27235E+00
+    83     1.30376E+00    1.28805E+00
+    84     1.31947E+00    1.30376E+00
+    85     1.33518E+00    1.31947E+00
+    86     1.35088E+00    1.33518E+00
+    87     1.36659E+00    1.35088E+00
+    88     1.38230E+00    1.36659E+00
+    89     1.39801E+00    1.38230E+00
+    90     1.41372E+00    1.39801E+00
+    91     1.42942E+00    1.41372E+00
+    92     1.44513E+00    1.42942E+00
+    93     1.46084E+00    1.44513E+00
+    94     1.47655E+00    1.46084E+00
+    95     1.49226E+00    1.47655E+00
+    96     1.50796E+00    1.49226E+00
+    97     1.52367E+00    1.50796E+00
+    98     1.53938E+00    1.52367E+00
+    99     1.55509E+00    1.53938E+00
+   100     1.57080E+00    1.55509E+00
+ 
+
+Region A Title: Am-241 in region A                                                           
+
+Number of elemental constituents in region A:  1
+Solid stopping cross-sections used (isga= 0) in region A.
+Elemental Constituents in Region A:
+ 
+  Z-value  Atom Fraction
+  -------  -------------
+     95     1.0000000000
+ 
+Number of source nuclides to be evaluated:  1
+ 
+Source Nuclides in Region A:
+ 
+    ZAID     Atom Fraction
+    ----     -------------
+   952410     1.000E+00
+ 
+
+Region B Title: CO2 in region B                                                              
+
+Number of elemental constituents in region B:  2
+Gas stopping cross-sections used (isgb= 1) in region B.
+Material B atom density:  1.00000E-05 atoms/b-cm.
+Interface region thickness:  2.00000E+00 cm.
+ 
+Elemental Constituents in Region B:
+ 
+  Z-value  Atom Fraction
+  -------  -------------
+      6     0.3330000000
+      8     0.6670000000
+
+Number of target nuclides in region B:  3
+ 
+Target Nuclides in Region B:
+ 
+    ZAID     Atom Fraction
+    ----     -------------
+    60130     7.333E-03
+    80170     2.667E-04
+    80180     1.333E-03
+ 
+
+Region C Title: Lexan shield in region C                                                     
+
+Number of elemental constituents in region C:  3
+Solid stopping cross-sections used (isgc= 0) in region C.
+ 
+Elemental Constituents in Region C:
+ 
+  Z-value  Atom Fraction
+  -------  -------------
+      6     0.4850000000
+      1     0.4240000000
+      8     0.0909481000
+
+Number of target nuclides in region C:  3
+ 
+Target Nuclides in Region C:
+ 
+    ZAID     Atom Fraction
+    ----     -------------
+    60130     5.189E-03
+    80170     3.458E-05
+    80180     1.866E-04
+
+
+
+
+                      Summary of Output
+                      =================
+
+Total (alpha,n) neutron source from all sources and targets:  1.62646E+01 n/sec-cm^2.
+
+Average (alpha,n) neutron energy:  3.78568E+00 MeV.
+
+Normalized Neutron Energy Spectrum by Energy Group for All Sources:
+(Note: group structure is independent of erg record!)
+
+          Group      Contribution
+          -----      ------------
+             1        0.00000E+00
+             2        0.00000E+00
+             3        0.00000E+00
+             4        0.00000E+00
+             5        5.33240E-10
+             6        2.75391E-03
+             7        1.35322E-02
+             8        2.29478E-02
+             9        3.32288E-02
+            10        7.97711E-02
+            11        1.24029E-01
+            12        1.82249E-01
+            13        1.86493E-01
+            14        1.24982E-01
+            15        6.35776E-02
+            16        6.72408E-02
+            17        4.72129E-02
+            18        2.40592E-02
+            19        1.20936E-02
+            20        1.58296E-02
