@@ -1,4 +1,4 @@
-Three-Region Interface Problem Am-CO2-Lexan
+Three-Region Interface Problem Am-CO2-plastic
 4 2 1
 2000 6.5 0.0000001
 20 10.0 0.0
@@ -16,7 +16,7 @@ CO2 in region B
   60130 0.0073333
   80170 0.0002667
   80180 0.0013333
-Lexan shield in region C
+Plastic in region C
 3 0
    6 4.85000e-01
    1 4.24000e-01

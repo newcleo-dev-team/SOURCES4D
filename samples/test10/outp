@@ -6,7 +6,7 @@ SOURCES 4D Calculation
                       Summary of Input
                       ================
  
-Title: Three-Region Interface Problem Am-CO2-Lexan                                  
+Title: Three-Region Interface Problem Am-CO2-plastic                                
 
 Three region problem input (idd = 4)
 Magnitudes and spectra computed.
@@ -196,7 +196,7 @@ Target Nuclides in Region B:
     80180     1.333E-03
  
 
-Region C Title: Lexan shield in region C                                                     
+Region C Title: Plastic in region C                                                          
 
 Number of elemental constituents in region C:  3
 Solid stopping cross-sections used (isgc= 0) in region C.
