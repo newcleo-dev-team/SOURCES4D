@@ -438,17 +438,9 @@ c-------------------------
        close(unit=12)
       endif
 c JAF for derivatives
-      if(idd.eq.1.or.idd.eq.3)then
-        if(sensitivity)then
+      if((idd.eq.1.or.idd.eq.3).and.sensitivity)then
           close(unit=13)
           close(unit=14)
-        else
-          close(unit=13, status='delete')
-          close(unit=14, status='delete')
-        endif
-      else
-        close(unit=13, status='delete')
-        close(unit=14, status='delete')
       end if
 
 
@@ -541,8 +533,10 @@ c l_2nd = .true./.false. calculate and write 2nd derivatives/don't
       logical l_sdata,l_2nd, sensitivity
       l_sdata=.false.
       l_2nd=.true.
-      open(unit=13,file='pdata',status='unknown')
-      if(l_sdata)open(unit=14,file='sdata',status='unknown')
+      if(sensitivity) then
+        open(unit=13,file='pdata',status='unknown')
+        if(l_sdata)open(unit=14,file='sdata',status='unknown')
+      endif
 c JAF end mod
 
 
@@ -644,8 +638,8 @@ c    14x,1pe12.4,/)
      1,1x,'all sources')
   280 format (////,1h2,35x,'Table II',/,36x,8(1h=),//,21x,
      1'Spontaneous Fission Neutron Production',///,8x,2(8h source ),
-     2'atoms  dk constant  sf decay    nu    neutrons',/,8x,'nuclide
-     3    per cm**3    (/second)   branching   bar   sec/cm**3',
+     2'atoms  dk constant  sf decay    nu    neutrons',/,8x,'nuclide'
+     3'    per cm**3    (/second)   branching   bar   sec/cm**3',
      4/,1h+,7x,7(1h_),2x,12(1h_),2x,11(1h_),2x,9(1h_),2x,5(1h_),2x,
 c JAF more digits
 c    59(1h_))
@@ -883,9 +877,11 @@ c JAF error check (18 lines)
         close(unit=8, status='delete')
         close(unit=10, status='delete')
         close(unit=11)
-        close(unit=12, status='delete')
-        close(unit=13, status='delete')
-        if(l_sdata)close(unit=14, status='delete')
+        if(sensitivity) then
+          close(unit=12, status='delete')
+          close(unit=13, status='delete')
+          if(l_sdata)close(unit=14, status='delete')
+        endif
         stop
       end if
       if (isg.eq.0) then
@@ -989,9 +985,11 @@ c JAF error check (18 lines)
         close(unit=8, status='delete')
         close(unit=10, status='delete')
         close(unit=11)
-        close(unit=12, status='delete')
-        close(unit=13, status='delete')
-        if(l_sdata)close(unit=14, status='delete')
+        if(sensitivity) then
+          close(unit=12, status='delete')
+          close(unit=13, status='delete')
+          if(l_sdata)close(unit=14, status='delete')
+        endif
         stop
       end if
       nngp1=nng+1
@@ -1160,9 +1158,11 @@ c JAF error check (18 lines)
         close(unit=8, status='delete')
         close(unit=10, status='delete')
         close(unit=11)
+        if(sensitivity) then
         close(unit=12, status='delete')
         close(unit=13, status='delete')
         if(l_sdata)close(unit=14, status='delete')
+        endif
         stop
       end if
 c JAF for derivatives (6 lines)
@@ -1201,7 +1201,31 @@ c JAF move this block to here from after "if (id.eq.2) rewind 4"
         ajwd2='cm**'
         ajwd3='3   '
       endif
-      if (nt.eq.0) go to 1140
+
+c-----------------------------
+c calculate number of spontaneous fission
+c and delayed neutrons sources
+c-----------------------------
+      rewind 5
+ 1136 read (5,10) icont
+      if (icont.ne.0) go to 1136
+      do 1137 k=1,nq
+ 1138   read (5,110,end=1144) idq,nal,ndn
+ 1139   read (5,60) alam,bfsf,barnu,a,b,bfdn
+        if (nal.eq.0) go to 1141
+        read (5,120) (eal(l),fal(l),l=1,nal)
+ 1141   if (ndn.eq.0) go to 1142
+        read (5,120) (fdng(nd),nd=1,ndn)
+ 1142   if (idq-jq(k)) 1138,1143,1144
+ 1144   write (6,160) jq(k)
+c JAF no need to stop
+c       stop 'S.F. source nuclide not found on tape5'
+        cycle
+ 1143   continue
+        if(bfsf.gt.0) isfnq=isfnq+1
+        if(bfdn.gt.0) idnnq=idnnq+1
+ 1137   continue
+        if (nt.eq.0) go to 1140
 
 c----------------------------------------------------
 c beginning of big loop over target nuclides
@@ -1336,9 +1360,7 @@ c JAF no need to stop
 c     stop 'Source nuclide not found in tape5'
       write(*,'("Source nuclide not found in tape5")')
       cycle
-  840 if (i.eq.1.and.bfsf.gt.0.) isfnq=isfnq+1
-      if (i.eq.1.and.bfdn.gt.0.) idnnq=idnnq+1
-      if (nal.eq.0) go to 1100
+  840 if (nal.eq.0) go to 1100
       if(eal(nal).gt.e(1)) go to 845
       write(6,842) idq,idt
   842 format(i8,13h alphas below,i8,20h (alpha,n) threshold)
@@ -1508,7 +1530,7 @@ c           write(14,'("dcx",2i6,1p2e16.8)')j,m,dcx,rep
 c           dcx=dcx*(1.d0-0.010d0)
 c           write(14,'("dcx",2i6,1p2e16.8)')j,m,dcx,rep
 c         end if
-          if(l_sdata)then
+          if(l_sdata.and.sensitivity)then
             if(m*j.eq.1)write(14,'("stopping power",/,
      1       4x,"j",4x,"g",2x,"ee",14x,"nuclear",9x,"nuc.frac.",
      2       7x,"electronic",6x,"elec.frac.",6x,"total")')
@@ -1875,8 +1897,10 @@ c JAF Eq. (32), except does not depend on the product level.
       do 1020 n=1,nng
  1020 s(n)=0.
 c JAF
-      dq3c(1:nng,1:nagp1)=0.d0
-      dq3s(1:nng,1:nagp1,1:nz)=0.d0
+      if(sensitivity) then
+        dq3c(1:nng,1:nagp1)=0.d0
+        dq3s(1:nng,1:nagp1,1:nz)=0.d0
+      endif
 c fact is 1E-6*at = 1E-6*Ni/N where i is target
 c     write(*,'("i,k,l,mm",3i4,i8,1pe17.9)')i,k,l,mm,pval ! DEBUG
 c     if(l_sdata)then
@@ -2020,7 +2044,7 @@ c
 c1075 continue JAF, unused
  1080 continue ! JAF l, alpha energy level
 c JAF
-      if(l_sdata)then
+      if(l_sdata.and.sensitivity)then
         write(14,'(2x,"derivative of source rate density in g w.r.t. ",
      1   "(alpha,n) cross section comp. grid values")')
         write(14,'(4x,"g    m",2x,"dqgdsig")')
@@ -2287,35 +2311,9 @@ c JAF bug. initialize dummy1.
       write(8,2090)
 
 c-----------------------------
-c calculate number of spontaneous fission
-c and delayed neutrons sources if nt=0
-c-----------------------------
-1140  if(nt.eq.0) then
-      rewind 5
- 1136 read (5,10) icont
-      if (icont.ne.0) go to 1136
-      do 1137 k=1,nq
- 1138   read (5,110,end=1144) idq,nal,ndn
- 1139   read (5,60) alam,bfsf,barnu,a,b,bfdn
-        if (nal.eq.0) go to 1141
-        read (5,120) (eal(l),fal(l),l=1,nal)
- 1141   if (ndn.eq.0) go to 1142
-        read (5,120) (fdng(nd),nd=1,ndn)
- 1142   if (idq-jq(k)) 1138,1143,1144
- 1144   write (6,160) jq(k)
-c JAF no need to stop
-c       stop 'S.F. source nuclide not found on tape5'
-        cycle
- 1143   continue
-        if(bfsf.gt.0) isfnq=isfnq+1
-        if(bfdn.gt.0) idnnq=idnnq+1
- 1137   continue
-      endif
-
-c-----------------------------
 c calculate s.f. neutron source
 c-----------------------------
-      if (idd.eq.3) go to 1400
+ 1140 if (idd.eq.3) go to 1400
       if (isfnq.eq.0) go to 1260
       rewind 5
  1150 read (5,10) icont
