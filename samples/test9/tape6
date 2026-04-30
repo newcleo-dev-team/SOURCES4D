@@ -18,7 +18,7 @@ Title: Sample 1 - PuBe13 Source (Stewart, 1953)
 
 
          source  source atoms  dk constant  sf decay    nu    neutrons
-        nuclide        per cm**3    (/second)   branching   bar   sec/cm**3
+        nuclide    per cm**3    (/second)   branching   bar   sec/cm**3
 +       _______  ____________  ___________  _________  _____  ____________
          pu238    7.0500E+17   2.5031E-10   1.850E-09  2.220  7.247650E-01
          pu239    5.8200E+21   9.1103E-13   3.000E-12  2.160  3.435818E-02
