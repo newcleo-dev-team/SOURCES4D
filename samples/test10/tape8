@@ -84,11 +84,11 @@ Title: Alphas at interface bc using region B materials for neutron production
 
 
  Total Neutron Spectrum
- 3.338E-03 5.526E-03 1.687E-02 3.219E-02 3.594E-02 2.424E-02 4.318E-02 6.644E-02
- 6.519E-02 3.889E-02 2.212E-02 5.921E-03 2.701E-03 6.117E-04 5.777E-06 0.000E+00
+ 9.191E-03 1.521E-02 4.645E-02 8.864E-02 9.897E-02 6.676E-02 1.189E-01 1.830E-01
+ 1.795E-01 1.071E-01 6.091E-02 1.630E-02 7.437E-03 1.684E-03 1.591E-05 0.000E+00
  0.000E+00 0.000E+00 0.000E+00 0.000E+00
-                               Total (all groups):  3.632E-01 neutrons/sec-cm^2.
-                           Average Neutron Energy:  3.475E+00 MeV.
+                               Total (all groups):  1.000E+00 neutrons/sec-cm^2.
+                           Average Neutron Energy:  3.449E+00 MeV.
 
 
 ================================================================================
@@ -123,11 +123,11 @@ Title: Alphas at interface bc using region C materials for neutron production
 
 
  Total Neutron Spectrum
- 6.099E-04 1.015E-03 3.107E-03 5.890E-03 6.643E-03 6.311E-03 3.528E-02 6.188E-02
- 6.125E-02 3.633E-02 2.059E-02 5.469E-03 2.484E-03 5.610E-04 5.287E-06 0.000E+00
+ 2.465E-03 4.102E-03 1.256E-02 2.381E-02 2.685E-02 2.551E-02 1.426E-01 2.501E-01
+ 2.476E-01 1.468E-01 8.322E-02 2.210E-02 1.004E-02 2.267E-03 2.137E-05 0.000E+00
  0.000E+00 0.000E+00 0.000E+00 0.000E+00
-                               Total (all groups):  2.474E-01 neutrons/sec-cm^2.
-                           Average Neutron Energy:  3.601E+00 MeV.
+                               Total (all groups):  1.000E+00 neutrons/sec-cm^2.
+                           Average Neutron Energy:  3.985E+00 MeV.
 
 
 ================================================================================
