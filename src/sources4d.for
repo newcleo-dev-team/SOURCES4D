@@ -783,9 +783,16 @@ c JAF added rnapier and changed e from to 2.71828 to 2.7182818284590d+0
       bdef=4.6d0
 c JAF line label 400 removed
       totqsf=0.d0
+      totqdn=0.
       isfnq=0
       idnnq=0
+      qtotal=0.
       gttqan=0.d0
+      gtmga=0.
+      gtmg=0.
+      ebaran=0.
+      ebarsf=0.
+      ebardn=0.
       sens=0
 
 c-----------------------------------
@@ -996,6 +1003,7 @@ c JAF error check (18 lines)
       if (nng.gt.0) go to 540
       nng=-nng
       nngp1=nng+1
+      en(:)=0.
       en(nngp1)=enmin
       read (1,*) (en(n),n=1,nng)
       do 527 n=1,nng
@@ -1052,22 +1060,29 @@ c JAF error check (18 lines)
 c----------------------------
 c zero total spectrum storage
 c----------------------------
-      do 570 n=1,nng
-        ts(n)=0.
-        gtsan(n)=0.
-  570 tssf(n)=0.
+
+      ts(:)=0.
+      gtsan(:)=0.
+      tsdn(:)=0.
+      tssf(:)=0.
+      ssf(:)=0.
       etpall=0.
       ebtall=0.
+      etop=0.
+      ebot=0.
+      etopl(:)=0.
+      ebotl(:)=0.
+      sl(:,:)=0.
+      totlev(:)=0.
+      sbtqan=0.
+      san(:)=0.
+      sfoutp2=0.
       etopan=0.
       ebotan=0.
       etopsf=0.
       ebotsf=0.
       etopdn=0.
       ebotdn=0.
-      gttqan=0.
-      totqsf=0.
-      totqdn=0.
-      qtotal=0.
       ebarsf=0.
       ebardn=0.
       ebrall=0.
@@ -1337,12 +1352,12 @@ c--------------------------------------------
         etopl(il)=0.
         ebotl(il)=0.
         do 774 n=1,nng
-  774   sl(n,il)=0.
-  775 totlev(il)=0.
+  774     sl(n,il)=0.
+  775   totlev(il)=0.
       sbtqan=0.
       if(id.eq.1) go to 790
       do 780 n=1,nng
-  780 san(n)=0.
+  780   san(n)=0.
       if(nq.le.0) go to 850
 
 c-------------------------------------------
@@ -1588,6 +1603,7 @@ c that happens below (label 970).
             h=0.5d0
           end if
           do l=1,nal
+            if(idd.eq.3) fal(l)=1.
             if(m.gt.1)then
 c  m is immediately above l
               if(eal(l).gt.ee(m-1).and.eal(l).lt.ee(m))then
@@ -2634,7 +2650,7 @@ c JAF bug. initialize dummy3.
       write(8,2021)
       write(8,2090)
  1400 continue
-      if (id.eq.1) go to 1430
+      if (id.eq.1) go to 1440
       itest=0
       if(nt.gt.0) itest=1
       if(isfnq.gt.0) itest=itest+1
@@ -2768,11 +2784,13 @@ c  Output Summary
 c-----------------
  1440 continue
       qtotal=gttqan+totqsf+totqdn
-      ebrall=ebaran*gttqan
-      if (isfnq.ne.0) ebrall=ebrall+(ebarsf*totqsf)
-      if (idnnq.ne.0) ebrall=ebrall+(ebardn*totqdn)
-      ebrall=ebrall/qtotal
-      if (nq.eq.0) ebrall=ebaran
+      if(id.gt.1) then
+        ebrall=ebaran*gttqan
+        if (isfnq.ne.0) ebrall=ebrall+(ebarsf*totqsf)
+        if (idnnq.ne.0) ebrall=ebrall+(ebardn*totqdn)
+        ebrall=ebrall/qtotal
+        if (nq.eq.0) ebrall=ebaran
+      endif
       write(11,2090)
       write(11,2090)
       write(11,3000)
@@ -5410,6 +5428,13 @@ c loop on target nuclides i
 c--------------------------
       alph=4.
       aneut=1.
+      gttqan=0.
+      qan=0.
+      etopan=0.
+      ebotan=0.
+      gtsan(:)=0.
+      ts(:)=0.
+      san(:)=0.
       do 1120 i=1,nt
        etpant=0.
        ebtant=0.
@@ -5612,8 +5637,12 @@ c     write(6,205) (frclev(il),il=1,jl(i))
       smga=0.
       if (nq.ne.0) write (8,240) jsm(lzt(i)),lat(i),amt(i)
       do 1097 n=1,nng
-      san(n)=san(n)/sbtqan
- 1097 smga=smga+san(n)
+        if(sbtqan.gt.0) then
+          san(n)=san(n)/sbtqan
+        else
+          san(n)=0
+        endif
+ 1097   smga=smga+san(n)
       if (erg.ge.1) then
       write (8,80) (san(n),n=nng,1,-1)
       elseif (erg.le.-1) then
@@ -5635,7 +5664,11 @@ c--------------------------------------
       do 1110 n=1,nng
  1110 tmga=tmga+tsan(n)
 c     fracgp=tmga/totqan
-      ebart=etpant/ebtant
+      if(ebtant.gt.0) then
+        ebart=etpant/ebtant
+      else
+        ebart=0.
+      endif
       etopan=etopan+etpant
       ebotan=ebotan+ebtant
       if(nq.le.1) go to 1120
