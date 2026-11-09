@@ -524,7 +524,8 @@ c    3 rk_drv_n_tot(maxel),fp_tot(2,maxel),
      6 dqdd(maxnag),dqdx1(maxnag),depsdb(6,maxel,maxnag),
      7 depsdc(9,maxel,maxnag),dqdb(6),dqdc(9,maxel),
      8 dq3c(maxnng,maxnag),dq3s(maxnng,maxnag,maxel),
-     9 dq_dlam(maxnq),alam_src(maxnq)
+     9 dq_dlam(maxnq),alam_src(maxnq),dq_dbfsf(maxnq),
+     a bfsf_src(maxnq)
 c JAF end mod
       common /names/ jsm
       common /masses/ amass(105)
@@ -1101,6 +1102,8 @@ c       fp_tot(1:2,1:maxel)=0.
 
         dq_dlam(1:maxnq)=0.d0
         alam_src(1:maxnq)=0.d0
+        dq_dbfsf(1:maxnq)=0.d0
+        bfsf_src(1:maxnq)=0.d0
       endif
 c
 c---------------------------------------------
@@ -2366,6 +2369,7 @@ c   possibly fixed with "isfnq=isfnq+1" after 1210. check this.
         qsf=aq(k)*alam*bfsf*barnu
 
         dq_dlam(k)=dq_dlam(k)+aq(k)*bfsf*barnu
+        dq_dbfsf(k)=aq(k)*alam*barnu
 
         if(qsf.le.0.) go to 1250
         ebar=0.25*a*a*b + 1.5*a
@@ -2819,6 +2823,22 @@ c-----------------
      1        dq_dlam(k),0.d0
             end if
         end do
+
+        write(15,'(/,"[spontaneous_fission_branching_fraction]")')
+        write(15,'("# zaid",8x,"F_SF",16x,"dQ_dF_SF",
+     1    11x,"S_F_SF")')
+
+        do k=1,nq
+          if(qtotal.gt.0.d0)then
+            write(15,'(i12,1p3e20.10)')jq(k),bfsf_src(k),
+     1        dq_dbfsf(k),bfsf_src(k)*dq_dbfsf(k)/qtotal
+          else
+            write(15,'(i12,1p3e20.10)')jq(k),bfsf_src(k),
+     1        dq_dbfsf(k),0.d0
+          end if
+        end do
+
+      end if
 
 
       if(id.gt.1) then
