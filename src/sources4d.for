@@ -525,7 +525,9 @@ c    3 rk_drv_n_tot(maxel),fp_tot(2,maxel),
      7 depsdc(9,maxel,maxnag),dqdb(6),dqdc(9,maxel),
      8 dq3c(maxnng,maxnag),dq3s(maxnng,maxnag,maxel),
      9 dq_dlam(maxnq),alam_src(maxnq),dq_dbfsf(maxnq),
-     a bfsf_src(maxnq)
+     a bfsf_src(maxnq),dq_dfalpha(maxnq,maxnal),
+     b fal_src(maxnq,maxnal),eal_src(maxnq,maxnal),
+     c nal_src(maxnq),dq_dEalpha(maxnq,maxnal)
 c JAF end mod
       common /names/ jsm
       common /masses/ amass(105)
@@ -1104,6 +1106,11 @@ c       fp_tot(1:2,1:maxel)=0.
         alam_src(1:maxnq)=0.d0
         dq_dbfsf(1:maxnq)=0.d0
         bfsf_src(1:maxnq)=0.d0
+        dq_dfalpha(1:maxnq,1:maxnal)=0.d0
+        dq_dEalpha(1:maxnq,1:maxnal)=0.d0
+        fal_src(1:maxnq,1:maxnal)=0.d0
+        eal_src(1:maxnq,1:maxnal)=0.d0
+        nal_src(1:maxnq)=0
       endif
 c
 c---------------------------------------------
@@ -1901,6 +1908,11 @@ c JAF end mod
       qan=aps*pval
 
       dq_dlam(k)=dq_dlam(k)+aq(k)*fal(l)*pval
+      dq_dfalpha(k,l)=dq_dfalpha(k,l)+aq(k)*alam*pval
+      if(mm.gt.0)then
+        dq_dEalpha(k,l)=dq_dEalpha(k,l)+aq(k)*alam*fal(l)*
+     1    (p(mm+1)-p(mm))/(ee(mm+1)-ee(mm))
+      end if
 
 
       sbtqan=sbtqan+qan
@@ -2836,6 +2848,27 @@ c-----------------
             write(15,'(i12,1p3e20.10)')jq(k),bfsf_src(k),
      1        dq_dbfsf(k),0.d0
           end if
+        end do
+
+        write(15,'(/,"[alpha_lines]")')
+        write(15,'("# zaid",6x,"line",7x,"E_alpha",13x,
+     1    "f_alpha",13x,"dQ_dfalpha",10x,"S_falpha",
+     2    10x,"dQ_dEalpha",10x,"S_Ealpha")')
+
+        do k=1,nq
+          do l=1,nal_src(k)
+            if(qtotal.gt.0.d0)then
+              write(15,'(i12,i6,1p6e20.10)')jq(k),l,
+     1          eal_src(k,l),fal_src(k,l),dq_dfalpha(k,l),
+     2          fal_src(k,l)*dq_dfalpha(k,l)/qtotal,
+     3          dq_dEalpha(k,l),
+     4          eal_src(k,l)*dq_dEalpha(k,l)/qtotal
+            else
+              write(15,'(i12,i6,1p4e20.10)')jq(k),l,
+     1          eal_src(k,l),fal_src(k,l),dq_dfalpha(k,l),
+     2          0.d0,dq_dEalpha(k,l),0.d0
+            end if
+          end do
         end do
 
       end if
