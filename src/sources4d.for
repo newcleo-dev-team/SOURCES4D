@@ -523,7 +523,8 @@ c    3 rk_drv_n_tot(maxel),fp_tot(2,maxel),
      5 pval_drv2_n(maxel,maxel),rk_drv2_n(maxel,maxel),
      6 dqdd(maxnag),dqdx1(maxnag),depsdb(6,maxel,maxnag),
      7 depsdc(9,maxel,maxnag),dqdb(6),dqdc(9,maxel),
-     8 dq3c(maxnng,maxnag),dq3s(maxnng,maxnag,maxel)
+     8 dq3c(maxnng,maxnag),dq3s(maxnng,maxnag,maxel),
+     9 dq_dlam(maxnq),alam_src(maxnq)
 c JAF end mod
       common /names/ jsm
       common /masses/ amass(105)
@@ -1097,6 +1098,9 @@ c       rk_drv_n_tot(1:maxel)=0.
 c       fp_tot(1:2,1:maxel)=0.
         depsdb(1:6,1:maxel,1:maxnag)=0.
         depsdc(1:9,1:maxel,1:maxnag)=0.
+
+        dq_dlam(1:maxnq)=0.d0
+        alam_src(1:maxnq)=0.d0
       endif
 c
 c---------------------------------------------
@@ -1892,6 +1896,10 @@ c source and target, same as sbtqan below.
       endif
 c JAF end mod
       qan=aps*pval
+
+      dq_dlam(k)=dq_dlam(k)+aq(k)*fal(l)*pval
+
+
       sbtqan=sbtqan+qan
       totqan=totqan+qan
       if (l.eq.1) go to 980
@@ -2356,6 +2364,9 @@ c JAF bug--weird things happen to s.f. summary if no (alpha,n).
 c   possibly fixed with "isfnq=isfnq+1" after 1210. check this.
  1210   continue
         qsf=aq(k)*alam*bfsf*barnu
+
+        dq_dlam(k)=dq_dlam(k)+aq(k)*bfsf*barnu
+
         if(qsf.le.0.) go to 1250
         ebar=0.25*a*a*b + 1.5*a
         etopsf=etopsf+ebar*qsf
@@ -2518,7 +2529,12 @@ c----------------------------------
 c JAF no need to stop
 c       stop 'D.N. source nuclide not found on tape5'
         cycle
- 1340   qdn=aq(k)*alam*bfdn
+ 1340   alam_src(k)=alam
+        qdn=aq(k)*alam*bfdn
+
+        dq_dlam(k)=dq_dlam(k)+aq(k)*bfdn
+
+
         etpdnq=0.
         ebtdnq=0.
         if(qdn.le.0.) go to 1390
@@ -2786,6 +2802,25 @@ c  Output Summary
 c-----------------
  1440 continue
       qtotal=gttqan+totqsf+totqdn
+
+      if(sensitivity)then
+        write(15,'("# SOURCES4D derivative data")')
+        write(15,'("qtotal ",1pe20.10)')qtotal
+        write(15,'(/,"[decay_constant]")')
+        write(15,'("# zaid",8x,"lambda",14x,"dQ_dlambda",
+     1    10x,"S_lambda")')
+
+        do k=1,nq
+          if(qtotal.gt.0.d0)then
+            write(15,'(i12,1p3e20.10)')jq(k),alam_src(k),
+     1        dq_dlam(k),alam_src(k)*dq_dlam(k)/qtotal
+          else
+            write(15,'(i12,1p3e20.10)')jq(k),alam_src(k),
+     1        dq_dlam(k),0.d0
+            end if
+        end do
+
+
       if(id.gt.1) then
         ebrall=ebaran*gttqan
         if (isfnq.ne.0) ebrall=ebrall+(ebarsf*totqsf)
