@@ -441,6 +441,7 @@ c JAF for derivatives
       if((idd.eq.1.or.idd.eq.3).and.sensitivity)then
           close(unit=13)
           close(unit=14)
+          close(unit=15)
       end if
 
 
@@ -536,6 +537,7 @@ c l_2nd = .true./.false. calculate and write 2nd derivatives/don't
       if(sensitivity) then
         open(unit=13,file='pdata',status='unknown')
         if(l_sdata)open(unit=14,file='sdata',status='unknown')
+        open(unit=15,file='ddata',status='unknown')
       endif
 c JAF end mod
 
