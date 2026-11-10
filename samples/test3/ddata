@@ -1,0 +1,15 @@
+# SOURCES4D derivative data
+qtotal     2.6024174102E+05
+
+[decay_constant]
+# zaid        lambda              dQ_dlambda          S_lambda
+      842100    5.7976300000E-08    4.4887607698E+12    1.0000000000E+00
+
+[spontaneous_fission_branching_fraction]
+# zaid        F_SF                dQ_dF_SF           S_F_SF
+      842100    0.0000000000E+00    0.0000000000E+00    0.0000000000E+00
+
+[alpha_lines]
+# zaid      line       E_alpha             f_alpha             dQ_dfalpha          S_falpha          dQ_dEalpha          S_Ealpha
+      842100     1    4.5168000000E+00    1.0700000000E-05    1.4718749060E+05    6.0517046315E-06    1.3272186249E+00    2.3035432600E-05
+      842100     2    5.3046000000E+00    9.9999000000E-01    2.6024276854E+05    9.9999394830E-01    1.7850381244E+05    3.6385067198E+00
