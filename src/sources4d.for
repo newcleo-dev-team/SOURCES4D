@@ -441,7 +441,11 @@ c JAF for derivatives
       if((idd.eq.1.or.idd.eq.3).and.sensitivity)then
           close(unit=13)
           close(unit=14)
-          close(unit=15)
+          if (idd.eq.1) then
+            close(unit=15)
+          elseif (idd.eq.3) then
+            close(unit=15, status='delete')
+          end if
       end if
 
 
