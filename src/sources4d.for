@@ -1111,6 +1111,7 @@ c       fp_tot(1:2,1:maxel)=0.
         fal_src(1:maxnq,1:maxnal)=0.d0
         eal_src(1:maxnq,1:maxnal)=0.d0
         nal_src(1:maxnq)=0
+
       endif
 c
 c---------------------------------------------
@@ -1391,7 +1392,15 @@ c JAF no need to stop
 c     stop 'Source nuclide not found in tape5'
       write(*,'("Source nuclide not found in tape5")')
       cycle
-  840 if (nal.eq.0) go to 1100
+  840 alam_src(k)=alam
+      nal_src(k)=nal
+
+      do l=1,nal
+        eal_src(k,l)=eal(l)
+        fal_src(k,l)=fal(l)
+      end do
+
+      if (nal.eq.0) go to 1100
       if(eal(nal).gt.e(1)) go to 845
       write(6,842) idq,idt
   842 format(i8,13h alphas below,i8,20h (alpha,n) threshold)
@@ -2378,6 +2387,9 @@ c       stop 'S.F. source nuclide not found on tape5'
 c JAF bug--weird things happen to s.f. summary if no (alpha,n).
 c   possibly fixed with "isfnq=isfnq+1" after 1210. check this.
  1210   continue
+        alam_src(k)=alam
+        bfsf_src(k)=bfsf
+
         qsf=aq(k)*alam*bfsf*barnu
 
         dq_dlam(k)=dq_dlam(k)+aq(k)*bfsf*barnu
@@ -2822,6 +2834,8 @@ c-----------------
       if(sensitivity)then
         write(15,'("# SOURCES4D derivative data")')
         write(15,'("qtotal ",1pe20.10)')qtotal
+
+c decay constant
         write(15,'(/,"[decay_constant]")')
         write(15,'("# zaid",8x,"lambda",14x,"dQ_dlambda",
      1    10x,"S_lambda")')
@@ -2836,6 +2850,7 @@ c-----------------
             end if
         end do
 
+c spontaneous-fission branching fraction
         write(15,'(/,"[spontaneous_fission_branching_fraction]")')
         write(15,'("# zaid",8x,"F_SF",16x,"dQ_dF_SF",
      1    11x,"S_F_SF")')
@@ -2850,6 +2865,7 @@ c-----------------
           end if
         end do
 
+c alpha emission-line probability
         write(15,'(/,"[alpha_lines]")')
         write(15,'("# zaid",6x,"line",7x,"E_alpha",13x,
      1    "f_alpha",13x,"dQ_dfalpha",10x,"S_falpha",
