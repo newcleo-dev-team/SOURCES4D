@@ -441,6 +441,11 @@ c JAF for derivatives
       if((idd.eq.1.or.idd.eq.3).and.sensitivity)then
           close(unit=13)
           close(unit=14)
+          if (idd.eq.1) then
+            close(unit=15)
+          elseif (idd.eq.3) then
+            close(unit=15, status='delete')
+          end if
       end if
 
 
@@ -522,7 +527,11 @@ c    3 rk_drv_n_tot(maxel),fp_tot(2,maxel),
      5 pval_drv2_n(maxel,maxel),rk_drv2_n(maxel,maxel),
      6 dqdd(maxnag),dqdx1(maxnag),depsdb(6,maxel,maxnag),
      7 depsdc(9,maxel,maxnag),dqdb(6),dqdc(9,maxel),
-     8 dq3c(maxnng,maxnag),dq3s(maxnng,maxnag,maxel)
+     8 dq3c(maxnng,maxnag),dq3s(maxnng,maxnag,maxel),
+     9 dq_dlam(maxnq),alam_src(maxnq),dq_dbfsf(maxnq),
+     a bfsf_src(maxnq),dq_dfalpha(maxnq,maxnal),
+     b fal_src(maxnq,maxnal),eal_src(maxnq,maxnal),
+     c nal_src(maxnq),dq_dEalpha(maxnq,maxnal)
 c JAF end mod
       common /names/ jsm
       common /masses/ amass(105)
@@ -536,6 +545,7 @@ c l_2nd = .true./.false. calculate and write 2nd derivatives/don't
       if(sensitivity) then
         open(unit=13,file='pdata',status='unknown')
         if(l_sdata)open(unit=14,file='sdata',status='unknown')
+        open(unit=15,file='ddata',status='unknown')
       endif
 c JAF end mod
 
@@ -1095,6 +1105,17 @@ c       rk_drv_n_tot(1:maxel)=0.
 c       fp_tot(1:2,1:maxel)=0.
         depsdb(1:6,1:maxel,1:maxnag)=0.
         depsdc(1:9,1:maxel,1:maxnag)=0.
+
+        dq_dlam(1:maxnq)=0.d0
+        alam_src(1:maxnq)=0.d0
+        dq_dbfsf(1:maxnq)=0.d0
+        bfsf_src(1:maxnq)=0.d0
+        dq_dfalpha(1:maxnq,1:maxnal)=0.d0
+        dq_dEalpha(1:maxnq,1:maxnal)=0.d0
+        fal_src(1:maxnq,1:maxnal)=0.d0
+        eal_src(1:maxnq,1:maxnal)=0.d0
+        nal_src(1:maxnq)=0
+
       endif
 c
 c---------------------------------------------
@@ -1375,7 +1396,15 @@ c JAF no need to stop
 c     stop 'Source nuclide not found in tape5'
       write(*,'("Source nuclide not found in tape5")')
       cycle
-  840 if (nal.eq.0) go to 1100
+  840 alam_src(k)=alam
+      nal_src(k)=nal
+
+      do l=1,nal
+        eal_src(k,l)=eal(l)
+        fal_src(k,l)=fal(l)
+      end do
+
+      if (nal.eq.0) go to 1100
       if(eal(nal).gt.e(1)) go to 845
       write(6,842) idq,idt
   842 format(i8,13h alphas below,i8,20h (alpha,n) threshold)
@@ -1890,6 +1919,15 @@ c source and target, same as sbtqan below.
       endif
 c JAF end mod
       qan=aps*pval
+
+      dq_dlam(k)=dq_dlam(k)+aq(k)*fal(l)*pval
+      dq_dfalpha(k,l)=dq_dfalpha(k,l)+aq(k)*alam*pval
+      if(mm.gt.0)then
+        dq_dEalpha(k,l)=dq_dEalpha(k,l)+aq(k)*alam*fal(l)*
+     1    (p(mm+1)-p(mm))/(ee(mm+1)-ee(mm))
+      end if
+
+
       sbtqan=sbtqan+qan
       totqan=totqan+qan
       if (l.eq.1) go to 980
@@ -2353,7 +2391,14 @@ c       stop 'S.F. source nuclide not found on tape5'
 c JAF bug--weird things happen to s.f. summary if no (alpha,n).
 c   possibly fixed with "isfnq=isfnq+1" after 1210. check this.
  1210   continue
+        alam_src(k)=alam
+        bfsf_src(k)=bfsf
+
         qsf=aq(k)*alam*bfsf*barnu
+
+        dq_dlam(k)=dq_dlam(k)+aq(k)*bfsf*barnu
+        dq_dbfsf(k)=aq(k)*alam*barnu
+
         if(qsf.le.0.) go to 1250
         ebar=0.25*a*a*b + 1.5*a
         etopsf=etopsf+ebar*qsf
@@ -2516,7 +2561,12 @@ c----------------------------------
 c JAF no need to stop
 c       stop 'D.N. source nuclide not found on tape5'
         cycle
- 1340   qdn=aq(k)*alam*bfdn
+ 1340   alam_src(k)=alam
+        qdn=aq(k)*alam*bfdn
+
+        dq_dlam(k)=dq_dlam(k)+aq(k)*bfdn
+
+
         etpdnq=0.
         ebtdnq=0.
         if(qdn.le.0.) go to 1390
@@ -2784,6 +2834,66 @@ c  Output Summary
 c-----------------
  1440 continue
       qtotal=gttqan+totqsf+totqdn
+
+      if(sensitivity)then
+        write(15,'("# SOURCES4D derivative data")')
+        write(15,'("qtotal ",1pe20.10)')qtotal
+
+c decay constant
+        write(15,'(/,"[decay_constant]")')
+        write(15,'("# zaid",8x,"lambda",14x,"dQ_dlambda",
+     1    10x,"S_lambda")')
+
+        do k=1,nq
+          if(qtotal.gt.0.d0)then
+            write(15,'(i12,1p3e20.10)')jq(k),alam_src(k),
+     1        dq_dlam(k),alam_src(k)*dq_dlam(k)/qtotal
+          else
+            write(15,'(i12,1p3e20.10)')jq(k),alam_src(k),
+     1        dq_dlam(k),0.d0
+            end if
+        end do
+
+c spontaneous-fission branching fraction
+        write(15,'(/,"[spontaneous_fission_branching_fraction]")')
+        write(15,'("# zaid",8x,"F_SF",16x,"dQ_dF_SF",
+     1    11x,"S_F_SF")')
+
+        do k=1,nq
+          if(qtotal.gt.0.d0)then
+            write(15,'(i12,1p3e20.10)')jq(k),bfsf_src(k),
+     1        dq_dbfsf(k),bfsf_src(k)*dq_dbfsf(k)/qtotal
+          else
+            write(15,'(i12,1p3e20.10)')jq(k),bfsf_src(k),
+     1        dq_dbfsf(k),0.d0
+          end if
+        end do
+
+c alpha emission-line probability
+        write(15,'(/,"[alpha_lines]")')
+        write(15,'("# zaid",6x,"line",7x,"E_alpha",13x,
+     1    "f_alpha",13x,"dQ_dfalpha",10x,"S_falpha",
+     2    10x,"dQ_dEalpha",10x,"S_Ealpha")')
+
+        do k=1,nq
+          do l=1,nal_src(k)
+            if(qtotal.gt.0.d0)then
+              write(15,'(i12,i6,1p6e20.10)')jq(k),l,
+     1          eal_src(k,l),fal_src(k,l),dq_dfalpha(k,l),
+     2          fal_src(k,l)*dq_dfalpha(k,l)/qtotal,
+     3          dq_dEalpha(k,l),
+     4          eal_src(k,l)*dq_dEalpha(k,l)/qtotal
+            else
+              write(15,'(i12,i6,1p4e20.10)')jq(k),l,
+     1          eal_src(k,l),fal_src(k,l),dq_dfalpha(k,l),
+     2          0.d0,dq_dEalpha(k,l),0.d0
+            end if
+          end do
+        end do
+
+      end if
+
+
       if(id.gt.1) then
         ebrall=ebaran*gttqan
         if (isfnq.ne.0) ebrall=ebrall+(ebarsf*totqsf)
