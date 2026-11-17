@@ -2,7 +2,6 @@
 
 SOURCES is a code for computing neutron source rates and spectra from spontaneous fission (including delayed neutrons) and (alpha,n) reactions in homogeneous materials and (alpha,n) reactions in single-interface and two-interface geometries. SOURCES4D is the latest release. It has the capability to compute sensitivities, as described in the documentation.
 
-SOURCES4D has been built and tested only on a Linux platform with an Intel FORTRAN compiler.
 
 ## Directory Contents
 
@@ -11,6 +10,43 @@ src--source code
 data--data files
 
 docs--documentation
+
+samples--10 test inputs and outputs and utility scripts
+
+## Requirements
+
+- GNU Fortran (`gfortran`)
+- GNU Make (`make`)
+
+The code has been successfully compiled and tested on multiple systems using different versions of GNU Fortran and GNU Make.
+
+## How to install
+
+To clone this repository and build the executable, please type the following commands:
+```bash
+git clone https://github.com/lanl/SOURCES4D.git
+cd SOURCES4D
+make
+```
+Once the build is complete, the executable will be available at `SOURCES4D/bin/sources4d`.
+
+To run the code, execute the following command from a Linux terminal:
+```bash
+/path/to/SOURCES4D/bin/sources4d /path/to/tape1
+```
+where `tape1` is the name of the input file. 
+**Note:** The folder containing the input file `tape1`, should also contain `tape2`, `tape3`, `tape4`, `tape5`. For more detailed information, refer to user manual included in the `docs` folder.
+
+## Usage
+
+For usage instruction, refer to the manual included in the `docs` folder.
+
+The latest version of the code introduces an additional input parameter to enable or disable the sensitivity calculation. This parameter must be added in `card 2`, after the `idd`, `id`, `erg` parameters. It accepts two values: `0` to disable the sensitivity calculation and `1` to enable it. To ensure compatibility with older inputs, this parameter is optional and, if omitted, it defaults to `0`. The sensitivity calculation is only available for the homogeneous configuration and for the alpha beam configuration.
+
+## Documentation
+
+The documentation can be found in the the `docs` folder of the repository. It contains:
+
 - sources4c.pdf
 Still the main user manual for SOURCES4D.
 > W. B. Wilson, R. T. Perry, E. F. Shores, W. S. Charlton, T. A. Parish, G. P. Estes, T. H. Brown, E. D. Arthur, M. Bozoian, T. R. England, D. G. Madland, and J. E. Stewart, “SOURCES 4C: A Code for Calculating (alpha,n), Spontaneous Fission, and Delayed Neutron Sources and Spectra,” _Proceedings of the American Nuclear Society/Radiation Protection and Shielding Division 12th Biennial Topical Meeting_, Santa Fe, New Mexico, April 14–18, 2002; http://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-02-1839.
@@ -21,23 +57,6 @@ User manual describing the new features in SOURCES4D.
 > Jeffrey A. Favorite and Sophie L. Weidenbenner, “Sensitivity of a Response to the Composition of an (alpha,n) Neutron Source,” _20th Topical Meeting of the Radiation Protection and Shielding Division of the American Nuclear Society (RPSD-2018)_, Santa Fe, New Mexico, August 26–31, 2018.
 - mc2019.proc_v_n_pp2335-2347.pdf
 > Jeffrey A. Favorite, “Second Derivative of an (alpha,n) Neutron Source with Respect to Constituent Isotope Densities,” _Proceedings of the International Conference on Mathematics and Computational Methods Applied to Nuclear Science and Engineering (M&C 2019)_, 2335–2347, Portland, Oregon, August 25–29, 2019.
-
-samples--10 test inputs and outputs and utility scripts
-
-## How to install
-
-To clone this repository and build the executable, please type the following commands:
-```bash
-git clone https://github.com/lanl/SOURCES4D.git
-cd SOURCES4D
-make
-```
-
-## Usage
-
-For usage instruction, refer to the manual included in the `docs` folder.
-
-The latest version of the code introduces an additional input parameter to enable or disable the sensitivity calculation. This parameter must be added in `card 2`, after the `idd`, `id`, `erg` parameters. It accepts two values: `0` to disable the sensitivity calculation and `1` to enable it. To ensure compatibility with older inputs, this parameter is optional and, if omitted, it defaults to `0`. The sensitivity calculation is only available for the homogeneous configuration and for the alpha beam configuration.
 
 ## Copyright
 
