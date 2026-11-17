@@ -330,8 +330,10 @@ c----------------------
 c  Common Data Storage
 c----------------------
       character title*7,jsm(105)*2
+      character(len=256) :: line
       real amass
-      integer erg, id, idd, ios, nerr
+      integer erg, id, idd, ios, nerr, sens
+      logical sensitivity
       dimension title(11), amass(105)
       common /names/ jsm
       common /masses/ amass
@@ -383,14 +385,29 @@ c-----------------
 c------------------
 c  Read From Tape1
 c------------------
+      sens=0
       read (1,17,end=99) title
-      read(1,*)idd,id,erg
+      read(1,'(A)',iostat=ios)line
+      if (ios /= 0) then
+        stop "Error in input"
+      endif
+      read(line,*,iostat=ios)idd,id,erg,sens
+      if (ios/=0) then
+        read(line,*,iostat=ios)idd,id,erg
+      endif
+      if (sens.eq.0) then
+        sensitivity = .false.
+      else if (sens.eq.1) then
+        sensitivity = .true.
+      else
+        stop 'Error in sensitivity input'
+      endif
       if (idd.eq.1) then
-       call homog(title,idd,id,erg)
+       call homog(title,idd,id,erg,sensitivity)
       elseif (idd.eq.2) then
        call interf(title,idd,id,erg)
       elseif (idd.eq.3) then
-       call homog(title,idd,id,erg)
+       call homog(title,idd,id,erg,sensitivity)
       elseif (idd.eq.4) then
        call three(title,idd,id,erg)
       else
@@ -421,13 +438,11 @@ c-------------------------
        close(unit=12)
       endif
 c JAF for derivatives
-      if(idd.eq.1.or.idd.eq.3)then
-        close(unit=13)
-        close(unit=14)
-      else
-        close(unit=13, status='delete')
-        close(unit=14, status='delete')
+      if((idd.eq.1.or.idd.eq.3).and.sensitivity)then
+          close(unit=13)
+          close(unit=14)
       end if
+
 
 c--------------------
 c  Format Statement
@@ -446,7 +461,7 @@ c=======================================================================
 c  Homogeneous Problem Subroutine (6/97)
 c=======================================================================
 
-      subroutine homog(title,idd,id,erg)
+      subroutine homog(title,idd,id,erg,sensitivity)
 
 
 
@@ -454,7 +469,8 @@ c---------
 c Storage
 c---------
       character title*7,jsm(105)*2,amt*1,amq*1,ajwd1*1,ajwd2*4,ajwd3*4
-      integer erg
+      integer erg, sens, ios
+      character(len=256) :: line
 c JAF introduce parameters
       integer maxel,maxlv,maxbr,maxnq,maxnag,maxnng,maxnd,maxxs,maxnal
       parameter (maxel=100,maxlv=20,maxbr=200,maxnq=300,maxnag=2001,
@@ -514,11 +530,13 @@ c     dimension frclev(maxel)
 c JAF for derivatives
 c l_sdata = .true./.false. calculate and write sdata/don't
 c l_2nd = .true./.false. calculate and write 2nd derivatives/don't
-      logical l_sdata,l_2nd
+      logical l_sdata,l_2nd, sensitivity
       l_sdata=.false.
       l_2nd=.true.
-      open(unit=13,file='pdata',status='unknown')
-      if(l_sdata)open(unit=14,file='sdata',status='unknown')
+      if(sensitivity) then
+        open(unit=13,file='pdata',status='unknown')
+        if(l_sdata)open(unit=14,file='sdata',status='unknown')
+      endif
 c JAF end mod
 
 
@@ -620,8 +638,8 @@ c    14x,1pe12.4,/)
      1,1x,'all sources')
   280 format (////,1h2,35x,'Table II',/,36x,8(1h=),//,21x,
      1'Spontaneous Fission Neutron Production',///,8x,2(8h source ),
-     2'atoms  dk constant  sf decay    nu    neutrons',/,8x,'nuclide
-     3    per cm**3    (/second)   branching   bar   sec/cm**3',
+     2'atoms  dk constant  sf decay    nu    neutrons',/,8x,'nuclide'
+     3'    per cm**3    (/second)   branching   bar   sec/cm**3',
      4/,1h+,7x,7(1h_),2x,12(1h_),2x,11(1h_),2x,9(1h_),2x,5(1h_),2x,
 c JAF more digits
 c    59(1h_))
@@ -765,15 +783,30 @@ c JAF added rnapier and changed e from to 2.71828 to 2.7182818284590d+0
       bdef=4.6d0
 c JAF line label 400 removed
       totqsf=0.d0
+      totqdn=0.
       isfnq=0
       idnnq=0
+      qtotal=0.
       gttqan=0.d0
+      gtmga=0.
+      gtmg=0.
+      ebaran=0.
+      ebarsf=0.
+      ebardn=0.
+      sens=0
 
 c-----------------------------------
 c  Read Input Parameters from Tape1
 c-----------------------------------
       read (1,17,end=1440) title
-      read(1,*)idd,id,erg
+      read(1,'(A)',iostat=ios)line
+      if (ios /= 0) then
+        stop "Error in input"
+      endif
+      read(line,*,iostat=ios)idd,id,erg,sens
+      if (ios/=0) then
+        read(line,*,iostat=ios)idd,id,erg
+      endif
       write(6,1900)
       write(7,1900)
       write(8,1900)
@@ -791,18 +824,20 @@ c-----------------------------------
         write(11,2047)idd
       endif
 c JAF for derivatives (12 lines)
-      if (idd.eq.1 .or. idd.eq.3) then
-        write(13,1900)
-        write(13,2020)
-        write(13,2030)title
-        write(13,2040)idd
-        write(13,2020)
-        if(l_sdata)then
-          write(14,1900)
-          write(14,2020)
-          write(14,2030)title
-          write(14,2040)idd
-          write(14,2020)
+      if(sensitivity)then
+        if (idd.eq.1 .or. idd.eq.3) then
+          write(13,1900)
+          write(13,2020)
+          write(13,2030)title
+          write(13,2040)idd
+          write(13,2020)
+          if(l_sdata)then
+            write(14,1900)
+            write(14,2020)
+            write(14,2030)title
+            write(14,2040)idd
+            write(14,2020)
+          endif
         endif
       endif
       if (id.eq.1) then
@@ -830,8 +865,10 @@ c JAF for derivatives (12 lines)
 
       read (1,*) nz,isg
 c JAF for derivatives (2 lines)
-      write(13,'(/,"number of stopping elems:",i6)')nz
-      if(l_sdata)write(14,'(/,"number of stopping elems:",i6)')nz
+      if(sensitivity) then
+        write(13,'(/,"number of stopping elems:",i6)')nz
+        if(l_sdata)write(14,'(/,"number of stopping elems:",i6)')nz
+      endif
       write(11,2050)nz
 c JAF error check (18 lines)
       if(nz.gt.maxel)then
@@ -847,9 +884,11 @@ c JAF error check (18 lines)
         close(unit=8, status='delete')
         close(unit=10, status='delete')
         close(unit=11)
-        close(unit=12, status='delete')
-        close(unit=13, status='delete')
-        if(l_sdata)close(unit=14, status='delete')
+        if(sensitivity) then
+          close(unit=12, status='delete')
+          close(unit=13, status='delete')
+          if(l_sdata)close(unit=14, status='delete')
+        endif
         stop
       end if
       if (isg.eq.0) then
@@ -953,15 +992,18 @@ c JAF error check (18 lines)
         close(unit=8, status='delete')
         close(unit=10, status='delete')
         close(unit=11)
-        close(unit=12, status='delete')
-        close(unit=13, status='delete')
-        if(l_sdata)close(unit=14, status='delete')
+        if(sensitivity) then
+          close(unit=12, status='delete')
+          close(unit=13, status='delete')
+          if(l_sdata)close(unit=14, status='delete')
+        endif
         stop
       end if
       nngp1=nng+1
       if (nng.gt.0) go to 540
       nng=-nng
       nngp1=nng+1
+      en(:)=0.
       en(nngp1)=enmin
       read (1,*) (en(n),n=1,nng)
       do 527 n=1,nng
@@ -1018,33 +1060,42 @@ c JAF error check (18 lines)
 c----------------------------
 c zero total spectrum storage
 c----------------------------
-      do 570 n=1,nng
-        ts(n)=0.
-        gtsan(n)=0.
-  570 tssf(n)=0.
+
+      ts(:)=0.
+      gtsan(:)=0.
+      tsdn(:)=0.
+      tssf(:)=0.
+      ssf(:)=0.
       etpall=0.
       ebtall=0.
+      etop=0.
+      ebot=0.
+      etopl(:)=0.
+      ebotl(:)=0.
+      sl(:,:)=0.
+      totlev(:)=0.
+      sbtqan=0.
+      san(:)=0.
+      sfoutp2=0.
       etopan=0.
       ebotan=0.
       etopsf=0.
       ebotsf=0.
       etopdn=0.
       ebotdn=0.
-      gttqan=0.
-      totqsf=0.
-      totqdn=0.
-      qtotal=0.
       ebarsf=0.
       ebardn=0.
       ebrall=0.
 c JAF for derivatives (7 lines)
-      san_der(1:maxel,1:maxnq)=0.
-      iz_tar(1:maxel)=0
-      iz_src(1:maxnq)=0
-c     rk_drv_n_tot(1:maxel)=0.
-c     fp_tot(1:2,1:maxel)=0.
-      depsdb(1:6,1:maxel,1:maxnag)=0.
-      depsdc(1:9,1:maxel,1:maxnag)=0.
+      if(sensitivity)then
+        san_der(1:maxel,1:maxnq)=0.
+        iz_tar(1:maxel)=0
+        iz_src(1:maxnq)=0
+c       rk_drv_n_tot(1:maxel)=0.
+c       fp_tot(1:2,1:maxel)=0.
+        depsdb(1:6,1:maxel,1:maxnag)=0.
+        depsdc(1:9,1:maxel,1:maxnag)=0.
+      endif
 c
 c---------------------------------------------
 c read alpha/s.f./d.n. sources from user input
@@ -1060,8 +1111,10 @@ c---------------------------------------------
       if (idd.eq.1) then
         write(11,2200)nq
 c JAF for derivatives (2 lines)
-        write(13,'("number of sources input: ",i6)')nq
-        if(l_sdata)write(14,'("number of sources input: ",i6)')nq
+        if(sensitivity)then
+          write(13,'("number of sources input: ",i6)')nq
+          if(l_sdata)write(14,'("number of sources input: ",i6)')nq
+        endif
       else
         write(11,2210)ebeam
         go to 620
@@ -1120,30 +1173,34 @@ c JAF error check (18 lines)
         close(unit=8, status='delete')
         close(unit=10, status='delete')
         close(unit=11)
+        if(sensitivity) then
         close(unit=12, status='delete')
         close(unit=13, status='delete')
         if(l_sdata)close(unit=14, status='delete')
+        endif
         stop
       end if
 c JAF for derivatives (6 lines)
-      write(13,'("number of targets input: ",i6)')nt
-      if(idd.eq.1)then
-        write(13,'("in this file, i is targets, j is stopping ",
-     1   "elements, k is sources, l is alpha levels")')
-      else if(idd.eq.3)then
-        write(13,'("in this file, i is targets, j is stopping ",
-     1   "elements")')
-      end if
-      if(l_sdata)then
-        write(14,'("number of targets input: ",i6)')nt
+      if(sensitivity)then
+        write(13,'("number of targets input: ",i6)')nt
         if(idd.eq.1)then
-          write(14,'("in this file, i is targets, j is stopping ",
-     1     "elements, k is sources, l is alpha levels")')
+          write(13,'("in this file, i is targets, j is stopping ",
+     1   "elements, k is sources, l is alpha levels")')
         else if(idd.eq.3)then
-          write(14,'("in this file, i is targets, j is stopping ",
-     1     "elements")')
+          write(13,'("in this file, i is targets, j is stopping ",
+     1   "elements")')
         end if
-      end if
+        if(l_sdata)then
+          write(14,'("number of targets input: ",i6)')nt
+          if(idd.eq.1)then
+            write(14,'("in this file, i is targets, j is stopping ",
+     1     "elements, k is sources, l is alpha levels")')
+          else if(idd.eq.3)then
+            write(14,'("in this file, i is targets, j is stopping ",
+     1     "elements")')
+          end if
+        end if
+      endif
       write(11,2090)
       write(11,2280)
       write(11,2090)
@@ -1159,7 +1216,31 @@ c JAF move this block to here from after "if (id.eq.2) rewind 4"
         ajwd2='cm**'
         ajwd3='3   '
       endif
-      if (nt.eq.0) go to 1140
+
+c-----------------------------
+c calculate number of spontaneous fission
+c and delayed neutrons sources
+c-----------------------------
+      rewind 5
+ 1136 read (5,10) icont
+      if (icont.ne.0) go to 1136
+      do 1137 k=1,nq
+ 1138   read (5,110,end=1144) idq,nal,ndn
+ 1139   read (5,60) alam,bfsf,barnu,a,b,bfdn
+        if (nal.eq.0) go to 1141
+        read (5,120) (eal(l),fal(l),l=1,nal)
+ 1141   if (ndn.eq.0) go to 1142
+        read (5,120) (fdng(nd),nd=1,ndn)
+ 1142   if (idq-jq(k)) 1138,1143,1144
+ 1144   write (6,160) jq(k)
+c JAF no need to stop
+c       stop 'S.F. source nuclide not found on tape5'
+        cycle
+ 1143   continue
+        if(bfsf.gt.0) isfnq=isfnq+1
+        if(bfdn.gt.0) idnnq=idnnq+1
+ 1137   continue
+        if (nt.eq.0) go to 1140
 
 c----------------------------------------------------
 c beginning of big loop over target nuclides
@@ -1271,12 +1352,12 @@ c--------------------------------------------
         etopl(il)=0.
         ebotl(il)=0.
         do 774 n=1,nng
-  774   sl(n,il)=0.
-  775 totlev(il)=0.
+  774     sl(n,il)=0.
+  775   totlev(il)=0.
       sbtqan=0.
       if(id.eq.1) go to 790
       do 780 n=1,nng
-  780 san(n)=0.
+  780   san(n)=0.
       if(nq.le.0) go to 850
 
 c-------------------------------------------
@@ -1294,9 +1375,7 @@ c JAF no need to stop
 c     stop 'Source nuclide not found in tape5'
       write(*,'("Source nuclide not found in tape5")')
       cycle
-  840 if (i.eq.1.and.bfsf.gt.0.) isfnq=isfnq+1
-      if (i.eq.1.and.bfdn.gt.0.) idnnq=idnnq+1
-      if (nal.eq.0) go to 1100
+  840 if (nal.eq.0) go to 1100
       if(eal(nal).gt.e(1)) go to 845
       write(6,842) idq,idt
   842 format(i8,13h alphas below,i8,20h (alpha,n) threshold)
@@ -1329,35 +1408,37 @@ c JAF this is a bug. nagp1 is not yet defined. add this line:
       nagp1=nag+1
       dea=(eamax-eamin)/fnag
 c JAF for derivatives
-      if(idd.eq.3)then
-        idq=0     ! otherwise undefined
-        alam=0.d0 ! set in case a derivative tries to use it
-      end if
-      iz_tar(i)=idt
-      iz_src(k)=idq
-      write(13,'(/,"target nuclide",i6,i12)')i,idt
-      write(13,'("atom frac.",2x,1pe15.7," (target)")')at
-      if(idd.eq.1)then
-        write(13,'("source nuclide",i6,i12)')k,idq
-c       write(13,'("number of alphas",i4)')nal
-        write(13,'("atom density",1pe15.7," (source)")')aq(k)*1.d-24
-        write(13,'("lambda",6x,1pe15.7," (source)")')alam
-      end if
-c     write(13,'("eamax,eamin",1x,1p2e15.7)')eamax,eamin
-c     write(13,'("delta-e",5x,1pe15.7," [(eamax-eamin)/nag]")')dea
-      if(l_sdata)then
-        write(14,'(/,"target nuclide",i6,i12)')i,idt
-        write(14,'("atom frac.",2x,1pe15.7," (target)")')at
-        if(idd.eq.1)then
-          write(14,'("source nuclide",i6,i12)')k,idq
-          write(14,'("atom density",1pe15.7," (source)")')aq(k)*1.d-24
-          write(14,'("lambda",6x,1pe15.7," (source)")')alam
-          write(14,'(3x,"l",2x,"erg_alpha",6x,"fal")')
-          do l=1,nal
-            write(14,'(i4,1p2e15.7)')l,eal(l),fal(l)
-          end do ! l
+      if(sensitivity)then
+        if(idd.eq.3)then
+          idq=0     ! otherwise undefined
+          alam=0.d0 ! set in case a derivative tries to use it
         end if
-      end if
+        iz_tar(i)=idt
+        iz_src(k)=idq
+        write(13,'(/,"target nuclide",i6,i12)')i,idt
+        write(13,'("atom frac.",2x,1pe15.7," (target)")')at
+        if(idd.eq.1)then
+          write(13,'("source nuclide",i6,i12)')k,idq
+c         write(13,'("number of alphas",i4)')nal
+          write(13,'("atom density",1pe15.7," (source)")')aq(k)*1.d-24
+          write(13,'("lambda",6x,1pe15.7," (source)")')alam
+        end if
+c       write(13,'("eamax,eamin",1x,1p2e15.7)')eamax,eamin
+c       write(13,'("delta-e",5x,1pe15.7," [(eamax-eamin)/nag]")')dea
+        if(l_sdata)then
+          write(14,'(/,"target nuclide",i6,i12)')i,idt
+          write(14,'("atom frac.",2x,1pe15.7," (target)")')at
+          if(idd.eq.1)then
+            write(14,'("source nuclide",i6,i12)')k,idq
+            write(14,'("atom density",1pe15.7," (source)")')aq(k)*1.d-24
+            write(14,'("lambda",6x,1pe15.7," (source)")')alam
+            write(14,'(3x,"l",2x,"erg_alpha",6x,"fal")')
+            do l=1,nal
+              write(14,'(i4,1p2e15.7)')l,eal(l),fal(l)
+            end do ! l
+          end if
+        end if
+      endif
 c JAF end mod
       ee(1)=eamin
       do 870 m=2,nag
@@ -1464,7 +1545,7 @@ c           write(14,'("dcx",2i6,1p2e16.8)')j,m,dcx,rep
 c           dcx=dcx*(1.d0-0.010d0)
 c           write(14,'("dcx",2i6,1p2e16.8)')j,m,dcx,rep
 c         end if
-          if(l_sdata)then
+          if(l_sdata.and.sensitivity)then
             if(m*j.eq.1)write(14,'("stopping power",/,
      1       4x,"j",4x,"g",2x,"ee",14x,"nuclear",9x,"nuc.frac.",
      2       7x,"electronic",6x,"elec.frac.",6x,"total")')
@@ -1514,163 +1595,166 @@ c
 c derivatives of source rate density w.r.t. (alpha,n) cross sections
 c and stopping power data. first deal with the interpolation of pval
 c that happens below (label 970).
-      dqdd(1:nagp1)=0.d0
-      do m=1,nagp1
-        h=1.d0
-        if(m.eq.1.or.m.eq.nagp1)then
-          h=0.5d0
-        end if
-        do l=1,nal
-          if(m.gt.1)then
-c m is immediately above l
-            if(eal(l).gt.ee(m-1).and.eal(l).lt.ee(m))then
-              dqdd(m)=dqdd(m)+0.5d0*fal(l)*(eal(l)-ee(m-1))/dea
-            end if
-          end if             ! this "end if/if" looks like it should be
-          if(m.lt.nagp1)then ! be an "else if" but it should not
-c m is immediately below l
-            if(eal(l).gt.ee(m).and.eal(l).lt.ee(m+1))then
-              dqdd(m)=dqdd(m)+0.5d0*fal(l)*(1.d0+(eal(l)-ee(m))/dea)
-c m is anywhere else below l
-            else if(eal(l).ge.ee(m+1))then
+      if(sensitivity)then
+        dqdd(1:nagp1)=0.d0
+        do m=1,nagp1
+          h=1.d0
+          if(m.eq.1.or.m.eq.nagp1)then
+            h=0.5d0
+          end if
+          do l=1,nal
+            if(idd.eq.3) fal(l)=1.
+            if(m.gt.1)then
+c  m is immediately above l
+              if(eal(l).gt.ee(m-1).and.eal(l).lt.ee(m))then
+                dqdd(m)=dqdd(m)+0.5d0*fal(l)*(eal(l)-ee(m-1))/dea
+              end if
+            end if             ! this "end if/if" looks like it should be
+            if(m.lt.nagp1)then ! be an "else if" but it should not
+c  m is immediately below l
+              if(eal(l).gt.ee(m).and.eal(l).lt.ee(m+1))then
+                dqdd(m)=dqdd(m)+0.5d0*fal(l)*(1.d0+(eal(l)-ee(m))/dea)
+c  m is anywhere else below l
+              else if(eal(l).ge.ee(m+1))then
+                dqdd(m)=dqdd(m)+h*fal(l)
+              end if
+            else if(m.eq.nagp1.and.eal(l).eq.ee(m))then
               dqdd(m)=dqdd(m)+h*fal(l)
             end if
-          else if(m.eq.nagp1.and.eal(l).eq.ee(m))then
-            dqdd(m)=dqdd(m)+h*fal(l)
-          end if
-        end do ! l
-      end do ! m
-c derivative of the source rate density w.r.t. (alpha,n) cross sections
-c in the data table. dqdx1 is the derivative of the source rate density
-c w.r.t. the (alpha,n) cross sections on the alpha energy grid.
-      if(l_sdata)then
-        write(14,'(2x,"derivative of source rate density ",
-     1   "w.r.t. (alpha,n) cross section comp. grid values")')
-        write(14,'(4x,"g  ee",14x,"cx",14x,"dqdsig")')
-        do m=1,nagp1
-          dqdx1(m)=dqdd(m)*aq(k)*alam*fact/scx(m)*dea
-          write(14,'(i5,1p3e16.8)')m,ee(m),cx(m),dqdx1(m)
+          end do ! l
         end do ! m
-        write(14,'(2x,"derivative of source rate density ",
-     1   "w.r.t. (alpha,n) cross section table values")')
-        write(14,'(3x,"jps=",i6)')jps
-        write(14,'(4x,"g  energy",10x,"xsec",12x,"dqdx")')
-c identify all points on alpha energy grid affected by each point on
-c data table. here dq2 is the desired derivative.
-        m2=1
-        do ip=1,jps
-          dq2=0.d0
-          m1=m2
-c         if(ip.eq.1)then
-c           write(14,'(i5,1pe14.6,i5,e14.6)')ip,e(ip),ip+1,e(ip+1)
-c         else if(ip.eq.jps)then
-c           write(14,'(i5,1pe14.6,i5,e14.6)')ip-1,e(ip-1),ip,e(ip)
-c         else
-c           write(14,'(i5,1pe14.6,i5,e14.6,i5,e14.6)')ip-1,e(ip-1),
-c    1       ip,e(ip),ip+1,e(ip+1)
-c         end if
-          do m=m1,nagp1
-            if(ip.eq.1)then
-              if(ee(m).lt.e(ip+1))then
-c               write(14,'("ee(m)",2i5,1pe14.6," included")')ip,m,ee(m)
-                if(m2.eq.m1.and.ee(m).gt.e(ip))m2=m
-              else
-c               write(14,'("ee(m)",2i5,1pe14.6," exit")')ip,m,ee(m)
-                exit
-              end if
-            else if(ip.eq.jps)then
-              if(ee(m).gt.e(ip-1))then
-c               write(14,'("ee(m)",2i5,1pe14.6," included")')ip,m,ee(m)
-                continue
-              else
-c               write(14,'("ee(m)",2i5,1pe14.6," exit")')ip,m,ee(m)
-                exit
-              end if
-            else
-              if(ee(m).gt.e(ip-1).and.ee(m).lt.e(ip+1))then
-c               write(14,'("ee(m)",2i5,1pe14.6," included")')ip,m,ee(m)
-                if(m2.eq.m1.and.ee(m).gt.e(ip))m2=m
-              else if(ee(m).gt.e(ip+1))then
-c               write(14,'("ee(m)",2i5,1pe14.6," exit")')ip,m,ee(m)
-                exit
-              else
-c               write(14,'("ee(m)",2i5,1pe14.6," cycle")')ip,m,ee(m)
-                cycle
-              end if
-            end if
-            if(ee(m).lt.e(ip))then
-              dq2=dq2+dqdx1(m)*(ee(m)-e(ip-1))/(e(ip)-e(ip-1))
-            else if(ee(m).gt.e(ip))then
-              dq2=dq2+dqdx1(m)*(e(ip+1)-ee(m))/(e(ip+1)-e(ip))
-            else if(ee(m).eq.e(ip))then
-              dq2=dq2+dqdx1(m)
-            end if
+c  derivative of the source rate density w.r.t. (alpha,n) cross sections
+c  in the data table. dqdx1 is the derivative of the source rate density
+c  w.r.t. the (alpha,n) cross sections on the alpha energy grid.
+        if(l_sdata)then
+          write(14,'(2x,"derivative of source rate density ",
+     1   "w.r.t. (alpha,n) cross section comp. grid values")')
+          write(14,'(4x,"g  ee",14x,"cx",14x,"dqdsig")')
+          do m=1,nagp1
+            dqdx1(m)=dqdd(m)*aq(k)*alam*fact/scx(m)*dea
+            write(14,'(i5,1p3e16.8)')m,ee(m),cx(m),dqdx1(m)
           end do ! m
-          write(14,'(i5,1p3e16.8)')ip,e(ip),x(ip),dq2
-        end do ! ip
+          write(14,'(2x,"derivative of source rate density ",
+     1   "w.r.t. (alpha,n) cross section table values")')
+          write(14,'(3x,"jps=",i6)')jps
+          write(14,'(4x,"g  energy",10x,"xsec",12x,"dqdx")')
+c  identify all points on alpha energy grid affected by each point on
+c  data table. here dq2 is the desired derivative.
+          m2=1
+          do ip=1,jps
+            dq2=0.d0
+            m1=m2
+c          if(ip.eq.1)then
+c            write(14,'(i5,1pe14.6,i5,e14.6)')ip,e(ip),ip+1,e(ip+1)
+c          else if(ip.eq.jps)then
+c            write(14,'(i5,1pe14.6,i5,e14.6)')ip-1,e(ip-1),ip,e(ip)
+c          else
+c            write(14,'(i5,1pe14.6,i5,e14.6,i5,e14.6)')ip-1,e(ip-1),
+c     1       ip,e(ip),ip+1,e(ip+1)
+c          end if
+            do m=m1,nagp1
+              if(ip.eq.1)then
+                if(ee(m).lt.e(ip+1))then
+c                write(14,'("ee(m)",2i5,1pe14.6," included")')ip,m,ee(m)
+                  if(m2.eq.m1.and.ee(m).gt.e(ip))m2=m
+                else
+c                write(14,'("ee(m)",2i5,1pe14.6," exit")')ip,m,ee(m)
+                  exit
+                end if
+              else if(ip.eq.jps)then
+                if(ee(m).gt.e(ip-1))then
+c                write(14,'("ee(m)",2i5,1pe14.6," included")')ip,m,ee(m)
+                  continue
+                else
+c                write(14,'("ee(m)",2i5,1pe14.6," exit")')ip,m,ee(m)
+                  exit
+                end if
+              else
+                if(ee(m).gt.e(ip-1).and.ee(m).lt.e(ip+1))then
+c                write(14,'("ee(m)",2i5,1pe14.6," included")')ip,m,ee(m)
+                  if(m2.eq.m1.and.ee(m).gt.e(ip))m2=m
+                else if(ee(m).gt.e(ip+1))then
+c                write(14,'("ee(m)",2i5,1pe14.6," exit")')ip,m,ee(m)
+                  exit
+                else
+c                write(14,'("ee(m)",2i5,1pe14.6," cycle")')ip,m,ee(m)
+                  cycle
+                end if
+              end if
+              if(ee(m).lt.e(ip))then
+                dq2=dq2+dqdx1(m)*(ee(m)-e(ip-1))/(e(ip)-e(ip-1))
+              else if(ee(m).gt.e(ip))then
+                dq2=dq2+dqdx1(m)*(e(ip+1)-ee(m))/(e(ip+1)-e(ip))
+              else if(ee(m).eq.e(ip))then
+                dq2=dq2+dqdx1(m)
+              end if
+            end do ! m
+            write(14,'(i5,1p3e16.8)')ip,e(ip),x(ip),dq2
+          end do ! ip
 c
 c derivative of source rate density w.r.t. stopping power data.
 c fact is 1E-6 times atom fraction of target nuclide.
 c aq(k) is the atom density of source nuclide.
 c here dq2 is the derivative of the source rate density w.r.t.
 c the stopping power of element j at alpha energy m.
-        dqdb(1:6)=0.
-        dqdc(1:9,1:nz)=0.
-        write(14,'(4x,"j",4x,"g",2x,"ee",14x,"eps",13x,"dqde")')
-        do j=1,nz
-          do m=1,nagp1
-            dq2=-dqdd(m)*aq(k)*azm(j)*alam*fact*dea*r(m)/scx(m)
-            write(14,'(2i5,1p20e16.8)')j,m,ee(m),dcxe(j,m),dq2
-            dqdb(1:6)=dqdb(1:6)+dq2*depsdb(1:6,j,m)
-            dqdc(1:9,j)=dqdc(1:9,j)+dq2*depsdc(1:9,j,m)
-          end do ! m
-        end do ! j
-        write(14,'(2x,"derivative of (alpha,n) source rate density ",
-     1   "w.r.t. nuclear stopping power constants")')
-        write(14,'(4x,"b",2x,"dqdb")')
-        do m=1,6
-          write(14,'(i5,1pe16.8)')m,dqdb(m)
-        end do ! j
-        write(14,'(2x,"derivative of (alpha,n) source rate density ",
-     1   "w.r.t. electronic stopping power data")')
-        write(14,'(4x,"c",4x,"j",2x,"dqdc")')
-        do m=1,9
+          dqdb(1:6)=0.
+          dqdc(1:9,1:nz)=0.
+          write(14,'(4x,"j",4x,"g",2x,"ee",14x,"eps",13x,"dqde")')
           do j=1,nz
-            write(14,'(2i5,1pe16.8)')m,j,dqdc(m,j)
-          end do ! j
-        end do ! m
-c       write(14,'(3x,"c",4x,"j",4x,"g",3x,"depsdc")')
-c       do m=1,9
-c         do j=1,nz
-c           do l=1,nagp1
-c             write(14,'(3i5,1pe16.8)')m,j,l,depsdc(m,j,l)
-c           end do ! l
-c         end do ! j
-c       end do ! m
-      end if ! l_sdata
-c
-      do j=1,nz
-        r_drv_n(1)=r(1)*dcxe(j,1)/scx(1)
-        p_drv_n(j,1)=0.
-c fact is 1E-6*at = 1E-6*Ni/N where i is target
-        do m=2,nagp1
-          r_drv_n(m)=r(m)*dcxe(j,m)/scx(m)
-          p_drv_n(j,m)=p_drv_n(j,m-1)+fact*(r_drv_n(m-1)+r_drv_n(m))
-     1     *dea/2.
-        end do ! m
-c second derivatives
-        if(l_2nd)then
-          do j2=1,nz
-            r_drv2_n(1)=r_drv_n(1)*dcxe(j2,1)/scx(1)
-            p_drv2_n(j,j2,1)=0.
-            do m=2,nagp1
-              r_drv2_n(m)=r_drv_n(m)*dcxe(j2,m)/scx(m)
-              p_drv2_n(j,j2,m)=p_drv2_n(j,j2,m-1)+fact
-     1         *(r_drv2_n(m-1)+r_drv2_n(m))*dea/2.
+            do m=1,nagp1
+              dq2=-dqdd(m)*aq(k)*azm(j)*alam*fact*dea*r(m)/scx(m)
+              write(14,'(2i5,1p20e16.8)')j,m,ee(m),dcxe(j,m),dq2
+              dqdb(1:6)=dqdb(1:6)+dq2*depsdb(1:6,j,m)
+              dqdc(1:9,j)=dqdc(1:9,j)+dq2*depsdc(1:9,j,m)
             end do ! m
-          end do ! j2
-        end if
-      end do ! j
+          end do ! j
+          write(14,'(2x,"derivative of (alpha,n) source rate density ",
+     1   "w.r.t. nuclear stopping power constants")')
+          write(14,'(4x,"b",2x,"dqdb")')
+          do m=1,6
+            write(14,'(i5,1pe16.8)')m,dqdb(m)
+          end do ! j
+          write(14,'(2x,"derivative of (alpha,n) source rate density ",
+     1   "w.r.t. electronic stopping power data")')
+          write(14,'(4x,"c",4x,"j",2x,"dqdc")')
+          do m=1,9
+            do j=1,nz
+              write(14,'(2i5,1pe16.8)')m,j,dqdc(m,j)
+            end do ! j
+          end do ! m
+c        write(14,'(3x,"c",4x,"j",4x,"g",3x,"depsdc")')
+c        do m=1,9
+c          do j=1,nz
+c            do l=1,nagp1
+c              write(14,'(3i5,1pe16.8)')m,j,l,depsdc(m,j,l)
+c            end do ! l
+c          end do ! j
+c        end do ! m
+        end if ! l_sdata
+c
+        do j=1,nz
+          r_drv_n(1)=r(1)*dcxe(j,1)/scx(1)
+          p_drv_n(j,1)=0.
+c fact is 1E-6*at = 1E-6*Ni/N where i is target
+          do m=2,nagp1
+            r_drv_n(m)=r(m)*dcxe(j,m)/scx(m)
+            p_drv_n(j,m)=p_drv_n(j,m-1)+fact*(r_drv_n(m-1)+r_drv_n(m))
+     1     *dea/2.
+          end do ! m
+c second derivatives
+          if(l_2nd)then
+            do j2=1,nz
+              r_drv2_n(1)=r_drv_n(1)*dcxe(j2,1)/scx(1)
+              p_drv2_n(j,j2,1)=0.
+              do m=2,nagp1
+                r_drv2_n(m)=r_drv_n(m)*dcxe(j2,m)/scx(m)
+                p_drv2_n(j,j2,m)=p_drv2_n(j,j2,m-1)+fact
+     1           *(r_drv2_n(m-1)+r_drv2_n(m))*dea/2.
+              end do ! m
+            end do ! j2
+          end if
+        end do ! j
+      endif
 c JAF end mod
   945 if (idd.ne.3) go to 950
 
@@ -1688,27 +1772,29 @@ c---------------------------------------------------------------------
       totqan=totqan+qan
 c JAF for derivatives
 c the derivative of p(nagp1) w.r.t Nj is p_drv_n(j,nagp1)
-      write(13,'(/,3x,"(alpha,n) source rate density for this ",
+      if(sensitivity)then
+        write(13,'(/,3x,"(alpha,n) source rate density for this ",
      1 "target",1pe15.7)')beamn
-      if(l_sdata)then
-        write(14,'(/,3x,"(alpha,n) source rate density for this ",
+        if(l_sdata)then
+          write(14,'(/,3x,"(alpha,n) source rate density for this ",
      1   "target",1pe15.7)')beamn
-      end if
-      write(13,'(/,3x,"j   Z  at.frac.",7x,"dp_i/dN_j*microamp")')
-      do j=1,nz
-        write(13,'(2i4,1p2e15.7)')j,jzm(j),azm(j),
-     1   aps*p_drv_n(j,nagp1)*1.d24
-      end do ! j
-      if(l_2nd)then
-        write(13,'(/,2x,"j1  Z1  at.frac.",7x,"j2  Z2  at.frac.",7x,
-     1   "d^2p_i/dN_j1 dN_j2*microamp")')
+        end if
+        write(13,'(/,3x,"j   Z  at.frac.",7x,"dp_i/dN_j*microamp")')
         do j=1,nz
-          do j2=1,nz
-            write(13,'(2i4,1pe15.7,2i4,2e15.7)')j,jzm(j),azm(j),
-     1       j2,jzm(j2),azm(j2),p_drv2_n(j,j2,nagp1)*1.d24
-          end do ! j2
+          write(13,'(2i4,1p2e15.7)')j,jzm(j),azm(j),
+     1   aps*p_drv_n(j,nagp1)*1.d24
         end do ! j
-      end if
+        if(l_2nd)then
+          write(13,'(/,2x,"j1  Z1  at.frac.",7x,"j2  Z2  at.frac.",7x,
+     1   "d^2p_i/dN_j1 dN_j2*microamp")')
+          do j=1,nz
+            do j2=1,nz
+              write(13,'(2i4,1pe15.7,2i4,2e15.7)')j,jzm(j),azm(j),
+     1       j2,jzm(j2),azm(j2),p_drv2_n(j,j2,nagp1)*1.d24
+            end do ! j2
+          end do ! j
+        end if
+      endif
 c JAF end mods
       if (id.eq.1) go to 1101
       mm=nag
@@ -1718,11 +1804,13 @@ c if nq>0 calculate neutrons from source alphas
 c----------------------------------------------
   950 do 1080 l=1,nal
 c JAF for derivatives (5 lines)
-      if(l.eq.1)then
-        fp=0.
-        rk_drv_n(1:maxel)=0.
-        if(l_2nd)rk_drv2_n(1:maxel,1:maxel)=0.
-      end if
+      if(sensitivity)then
+        if(l.eq.1)then
+          fp=0.
+          rk_drv_n(1:maxel)=0.
+          if(l_2nd)rk_drv2_n(1:maxel,1:maxel)=0.
+        end if
+      endif
       if (idd.eq.3) go to 1000
       do 960 m=1,nag
         mm=m
@@ -1732,28 +1820,30 @@ c JAF for derivatives (5 lines)
       go to 975
   970 pval=p(mm)+(eal(l)-ee(mm))*(p(mm+1)-p(mm))/(ee(mm+1)-ee(mm))
 c JAF for derivatives
-      do j=1,nz
-        pval_drv_n(j)=p_drv_n(j,mm)+(eal(l)-ee(mm))*
+      if(sensitivity)then
+        do j=1,nz
+          pval_drv_n(j)=p_drv_n(j,mm)+(eal(l)-ee(mm))*
      1   (p_drv_n(j,mm+1)-p_drv_n(j,mm))/(ee(mm+1)-ee(mm))
-        if(l_2nd)then
-          do j2=1,nz
-            pval_drv2_n(j,j2)=p_drv2_n(j,j2,mm)+(eal(l)-ee(mm))*
+          if(l_2nd)then
+            do j2=1,nz
+              pval_drv2_n(j,j2)=p_drv2_n(j,j2,mm)+(eal(l)-ee(mm))*
      1       (p_drv2_n(j,j2,mm+1)-p_drv2_n(j,j2,mm))/(ee(mm+1)-ee(mm))
-          end do ! j2
-        end if
-      end do ! j
-      fp=fp+fal(l)*pval
-c     fp_tot(1,i)=fp_tot(1,i)+fal(l)*pval
-c     fp_tot(2,i)=fp_tot(2,i)+fal(l)*pval*alam*aq(k)
-      do j=1,nz
-        rk_drv_n(j)=rk_drv_n(j)+fal(l)*pval_drv_n(j)
-c       rk_drv_n_tot(j)=rk_drv_n_tot(j)+fal(l)*pval_drv_n(j)*alam*aq(k)
-        if(l_2nd)then
-          do j2=1,nz
-            rk_drv2_n(j,j2)=rk_drv2_n(j,j2)+fal(l)*pval_drv2_n(j,j2)
-          end do ! j2
-        end if
-      end do ! j
+            end do ! j2
+          end if
+        end do ! j
+        fp=fp+fal(l)*pval
+c      fp_tot(1,i)=fp_tot(1,i)+fal(l)*pval
+c      fp_tot(2,i)=fp_tot(2,i)+fal(l)*pval*alam*aq(k)
+        do j=1,nz
+          rk_drv_n(j)=rk_drv_n(j)+fal(l)*pval_drv_n(j)
+c         rk_drv_n_tot(j)=rk_drv_n_tot(j)+fal(l)*pval_drv_n(j)*alam*aq(k)
+          if(l_2nd)then
+            do j2=1,nz
+              rk_drv2_n(j,j2)=rk_drv2_n(j,j2)+fal(l)*pval_drv2_n(j,j2)
+            end do ! j2
+          end if
+        end do ! j
+      endif
 c k indexes source nuclide, l indexes alpha level
 c JAF end mod
   975 aps=aq(k)*alam*fal(l)
@@ -1770,31 +1860,34 @@ c    5   1x,"dp_i/dN_j(erg_alpha)")')
 c     end if
 c     write(13,'(i4,1p30e15.7)')l,eal(l),fal(l),pval,
 c    1 (pval_drv_n(j),j=1,nz)
-      if(l.eq.nal)then
+      if(sensitivity)then
+        if(l.eq.nal)then
 c after this, fp is the (a,n) source rate density for this
 c source and target, same as sbtqan below.
-        fp=fp*aq(k)*alam
-        write(13,'(/,3x,"(alpha,n) source rate density for this ",
+          fp=fp*aq(k)*alam
+          write(13,'(/,3x,"(alpha,n) source rate density for this ",
      1   "source and target",1pe15.7)')fp
-        if(l_sdata)then
-          write(14,'(/,3x,"(alpha,n) source rate density for this ",
+          if(l_sdata)then
+            write(14,'(/,3x,"(alpha,n) source rate density for this ",
      1     "source and target",1pe15.7)')fp
-        end if
-        write(13,'(/,3x,"j   Z  at.frac.",7x,"sum_l {fal*dp_i/dN_j}")')
-        do j=1,nz
-          write(13,'(2i4,1p2e15.7)')j,jzm(j),azm(j),rk_drv_n(j)*1.d24
-        end do ! j
-        if(l_2nd)then
-          write(13,'(/,2x,"j1  Z1  at.frac.",7x,"j2  Z2  at.frac.",7x,
-     1     "sum_l {fal*d^2p_i/dN_j1 dN_j2}")')
+          end if
+          write(13,'(/,3x,"j   Z  at.frac.",7x,
+     1     "sum_l {fal*dp_i/dN_j}")')
           do j=1,nz
-            do j2=1,nz
-              write(13,'(2i4,1pe15.7,2i4,2e15.7)')j,jzm(j),azm(j),
-     1         j2,jzm(j2),azm(j2),rk_drv2_n(j,j2)*1.d24
-            end do ! j2
+            write(13,'(2i4,1p2e15.7)')j,jzm(j),azm(j),rk_drv_n(j)*1.d24
           end do ! j
+          if(l_2nd)then
+            write(13,'(/,2x,"j1  Z1  at.frac.",7x,"j2  Z2  at.frac.",7x,
+     1     "sum_l {fal*d^2p_i/dN_j1 dN_j2}")')
+            do j=1,nz
+              do j2=1,nz
+                write(13,'(2i4,1pe15.7,2i4,2e15.7)')j,jzm(j),azm(j),
+     1         j2,jzm(j2),azm(j2),rk_drv2_n(j,j2)*1.d24
+              end do ! j2
+            end do ! j
+          end if
         end if
-      end if
+      endif
 c JAF end mod
       qan=aps*pval
       sbtqan=sbtqan+qan
@@ -1820,8 +1913,10 @@ c JAF Eq. (32), except does not depend on the product level.
       do 1020 n=1,nng
  1020 s(n)=0.
 c JAF
-      dq3c(1:nng,1:nagp1)=0.d0
-      dq3s(1:nng,1:nagp1,1:nz)=0.d0
+      if(sensitivity) then
+        dq3c(1:nng,1:nagp1)=0.d0
+        dq3s(1:nng,1:nagp1,1:nz)=0.d0
+      endif
 c fact is 1E-6*at = 1E-6*Ni/N where i is target
 c     write(*,'("i,k,l,mm",3i4,i8,1pe17.9)')i,k,l,mm,pval ! DEBUG
 c     if(l_sdata)then
@@ -1891,7 +1986,7 @@ c    1       ep(ip),ea,ep(ip-1)
             s(n)=s(n)+gpadd
 c JAF for derivatives (2 lines)
 c           write(13,'("il,m,n,qan,rr(m),bx,de,dele,s(n),gpadd",3i4,
-c     1      1p20e15.7)')il,m,n,qan,rr(m),bx,de,dele,s(n),gpadd
+c     1     1p20e15.7)')il,m,n,qan,rr(m),bx,de,dele,s(n),gpadd
             sl(n,il)=sl(n,il)+gpadd
             totlev(il)=totlev(il)+gpadd
 c JAF cycle through alpha groups to compute dH/dp, where p
@@ -1908,47 +2003,49 @@ c           dqdf(1)=dqdf(1)-(ea-ep(lp1))/(ep(lp)-ep(lp1))*rr(m)
 c    1       *de/dele*sbtqan
 c           dqdf(2)=dqdf(2)+(ea-ep(lp1))/(ep(lp)-ep(lp1))*rr(m)
 c    1       *de/dele*sbtqan
-            do j=1,nz
-              do mp=1,mm+1 ! index boundaries, not bins
-                if(mp.eq.m.or.mp.eq.m+1)then
-                  if(j.eq.1)td1c=0.5d0*fact/scx(mp)*dea
-                  td1s=-0.5d0*azm(j)*fact*dea*r(mp)/scx(mp)
-                else
-                  if(j.eq.1)td1c=0.d0
-                  td1s=0.d0
-                end if
-                if(j.eq.1)td2c=fact/scx(mp)*dea
-                td2s=-azm(j)*fact*dea*r(mp)/scx(mp)
-                if(mp.eq.1)then
-                  if(j.eq.1)td2c=td2c*0.5d0
-                  td2s=td2s*0.5d0
-                else if(l.lt.nal.and.mp.eq.mm)then
-                  if(j.eq.1)td2c=td2c*0.5d0
-                  td2s=td2s*0.5d0
-                else if(l.lt.nal.and.mp.eq.mm+1)then
-                  if(j.eq.1)td2c=0.d0
-                  td2s=0.d0
-                else if(l.eq.nal.and.mp.eq.mm+1)then
-                  if(j.eq.1)td2c=td2c*0.5d0
-                  td2s=td2s*0.5d0
-                end if
-                if((mp.eq.mm.or.mp.eq.mm+1).and.l.lt.nal)then
-                  if(j.eq.1)td2c=td2c+0.5d0*fact/scx(mp)*dea
-     1             *(eal(l)-ee(mm))/(ee(mm+1)-ee(mm))
-                  td2s=td2s-0.5d0*azm(j)*fact*dea*r(mp)/scx(mp)
-     1             *(eal(l)-ee(mm))/(ee(mm+1)-ee(mm))
-                  if(m.eq.mm)then
-                    if(j.eq.1)td1c=td1c*(eal(l)-ee(mm))
-     1               /(ee(mm+1)-ee(mm))
-                    td1s=td1s*(eal(l)-ee(mm))/(ee(mm+1)-ee(mm))
+            if(sensitivity)then
+              do j=1,nz
+                do mp=1,mm+1 ! index boundaries, not bins
+                  if(mp.eq.m.or.mp.eq.m+1)then
+                    if(j.eq.1)td1c=0.5d0*fact/scx(mp)*dea
+                    td1s=-0.5d0*azm(j)*fact*dea*r(mp)/scx(mp)
+                  else
+                    if(j.eq.1)td1c=0.d0
+                    td1s=0.d0
                   end if
-                end if
-                if(j.eq.1)dq3c(n,mp)=dq3c(n,mp)+bx/pval
+                  if(j.eq.1)td2c=fact/scx(mp)*dea
+                  td2s=-azm(j)*fact*dea*r(mp)/scx(mp)
+                  if(mp.eq.1)then
+                    if(j.eq.1)td2c=td2c*0.5d0
+                    td2s=td2s*0.5d0
+                  else if(l.lt.nal.and.mp.eq.mm)then
+                    if(j.eq.1)td2c=td2c*0.5d0
+                    td2s=td2s*0.5d0
+                  else if(l.lt.nal.and.mp.eq.mm+1)then
+                    if(j.eq.1)td2c=0.d0
+                    td2s=0.d0
+                  else if(l.eq.nal.and.mp.eq.mm+1)then
+                    if(j.eq.1)td2c=td2c*0.5d0
+                    td2s=td2s*0.5d0
+                  end if
+                  if((mp.eq.mm.or.mp.eq.mm+1).and.l.lt.nal)then
+                    if(j.eq.1)td2c=td2c+0.5d0*fact/scx(mp)*dea
+     1             *(eal(l)-ee(mm))/(ee(mm+1)-ee(mm))
+                    td2s=td2s-0.5d0*azm(j)*fact*dea*r(mp)/scx(mp)
+     1             *(eal(l)-ee(mm))/(ee(mm+1)-ee(mm))
+                    if(m.eq.mm)then
+                      if(j.eq.1)td1c=td1c*(eal(l)-ee(mm))
+     1               /(ee(mm+1)-ee(mm))
+                      td1s=td1s*(eal(l)-ee(mm))/(ee(mm+1)-ee(mm))
+                    end if
+                  end if
+                  if(j.eq.1)dq3c(n,mp)=dq3c(n,mp)+bx/pval
      1           *(td1c-td2c*rr(m))*de/dele
-                dq3s(n,mp,j)=dq3s(n,mp,j)+bx/pval*(td1s-td2s*rr(m))
+                  dq3s(n,mp,j)=dq3s(n,mp,j)+bx/pval*(td1s-td2s*rr(m))
      1           *de/dele
-              end do ! mp
-            end do ! j
+                end do ! mp
+              end do ! j
+            endif
 c JAF
  1050     continue ! JAF n, neutron energy groups
  1055   continue ! JAF m, alpha energy groups
@@ -1963,7 +2060,7 @@ c
 c1075 continue JAF, unused
  1080 continue ! JAF l, alpha energy level
 c JAF
-      if(l_sdata)then
+      if(l_sdata.and.sensitivity)then
         write(14,'(2x,"derivative of source rate density in g w.r.t. ",
      1   "(alpha,n) cross section comp. grid values")')
         write(14,'(4x,"g    m",2x,"dqgdsig")')
@@ -2051,6 +2148,7 @@ c
         end do ! n
       end if ! l_sdata
 c JAF
+      if(id.eq.1) go to 1100
 c
 c----------------------------------------------------
 c output this (alpha,n) neutron spectrum contribution
@@ -2162,25 +2260,27 @@ c    1 "sum_i sum_k sum_l {alam_k*N_k*fal*dp_i/dN_j}")')
 c     do j=1,nz
 c       write(13,'(2i4,1p2e15.7)')j,jzm(j),azm(j),rk_drv_n_tot(j)
 c     end do ! j
-      niso(1:2)=0
-      do i=1,nt
-        if(iz_tar(i).eq.0)cycle
-        niso(1)=niso(1)+1
-      end do ! i
-      do k=1,nq
-        if(iz_src(k).eq.0)cycle
-        niso(2)=niso(2)+1
-      end do ! i
-      write(13,'(/,"(alpha,n) targets and sources")')
-      write(13,'("number of targets, sources",2i6)')niso(1:2)
-      do i=1,nt
-        if(iz_tar(i).eq.0)cycle
-        write(13,'("target nuclide",i6,i12)')i,iz_tar(i)
-      end do ! i
-      do k=1,nq  
-        if(iz_src(k).eq.0)cycle
-        write(13,'("source nuclide",i6,i12)')k,iz_src(k)
-      end do ! k
+      if(sensitivity)then
+        niso(1:2)=0
+        do i=1,nt
+          if(iz_tar(i).eq.0)cycle
+          niso(1)=niso(1)+1
+        end do ! i
+        do k=1,nq
+          if(iz_src(k).eq.0)cycle
+          niso(2)=niso(2)+1
+        end do ! i
+        write(13,'(/,"(alpha,n) targets and sources")')
+        write(13,'("number of targets, sources",2i6)')niso(1:2)
+        do i=1,nt
+          if(iz_tar(i).eq.0)cycle
+          write(13,'("target nuclide",i6,i12)')i,iz_tar(i)
+        end do ! i
+        do k=1,nq  
+          if(iz_src(k).eq.0)cycle
+          write(13,'("source nuclide",i6,i12)')k,iz_src(k)
+        end do ! k
+      endif
 c JAF end mod
 
 c----------------------------------------------------------------------
@@ -2230,7 +2330,7 @@ c-----------------------------
 c calculate s.f. neutron source
 c-----------------------------
  1140 if (idd.eq.3) go to 1400
-      if (isfnq.eq.0.and.nt.gt.0) go to 1260
+      if (isfnq.eq.0) go to 1260
       rewind 5
  1150 read (5,10) icont
       if (icont.ne.0) go to 1150
@@ -2253,7 +2353,6 @@ c       stop 'S.F. source nuclide not found on tape5'
 c JAF bug--weird things happen to s.f. summary if no (alpha,n).
 c   possibly fixed with "isfnq=isfnq+1" after 1210. check this.
  1210   continue
-c       isfnq=isfnq+1
         qsf=aq(k)*alam*bfsf*barnu
         if(qsf.le.0.) go to 1250
         ebar=0.25*a*a*b + 1.5*a
@@ -2551,26 +2650,11 @@ c JAF bug. initialize dummy3.
       write(8,2021)
       write(8,2090)
  1400 continue
-      if (id.eq.1) go to 1430
+      if (id.eq.1) go to 1440
       itest=0
       if(nt.gt.0) itest=1
       if(isfnq.gt.0) itest=itest+1
       if(idnnq.gt.0) itest=itest+1
-      if(itest.lt.2) then
-c JAF remove dummy; it is unused and immediately set to 0 in the
-c next section.
-c JAF bug. initialize dummy.
-c       dummy=0.
-        do 1405 n=1,nng
-c         dummy=dummy+ts(n)
-c JAF bug fix: gttqan is 0 if no (alpha,n) (or maybe the code
-c never gets here?)
-c         ts(n)=ts(n)/gttqan
-          if(gttqan.ne.0.)ts(n)=ts(n)/gttqan
- 1405   gtmg=gtmg+ts(n)
-c JAF bug fix: why go to 1430?
-c       go to 1430
-      endif
 
 c------------------------------------------------------------
 c output grand total (alpha,n) + s.f. + d.n. neutron spectrum
@@ -2700,11 +2784,13 @@ c  Output Summary
 c-----------------
  1440 continue
       qtotal=gttqan+totqsf+totqdn
-      ebrall=ebaran*gttqan
-      if (isfnq.ne.0) ebrall=ebrall+(ebarsf*totqsf)
-      if (idnnq.ne.0) ebrall=ebrall+(ebardn*totqdn)
-      ebrall=ebrall/qtotal
-      if (nq.eq.0) ebrall=ebaran
+      if(id.gt.1) then
+        ebrall=ebaran*gttqan
+        if (isfnq.ne.0) ebrall=ebrall+(ebarsf*totqsf)
+        if (idnnq.ne.0) ebrall=ebrall+(ebardn*totqdn)
+        ebrall=ebrall/qtotal
+        if (nq.eq.0) ebrall=ebaran
+      endif
       write(11,2090)
       write(11,2090)
       write(11,3000)
@@ -4977,7 +5063,8 @@ c--------------------------------------------------------------
        title1(10)='duction'
 c JAF pass in maxnag
        call neutron(title1,ntb,idb,atb,jp,ep,f,lzt,lat,lst,amt,el,
-     1 apro,q,e,x,nzb,jzb,azb,czb,jps,jl,astab,nstabb,naga,erg,maxnag)
+     1 apro,q,e,x,nzb,jzb,azb,czb,jps,jl,astab,nstabb,naga,erg,maxnag,
+     2 ee, cg, eal, nq)
 
 c--------------------------------------------------------------
 c   Calculate neutron source from bc interface due to region B
@@ -4994,7 +5081,8 @@ c--------------------------------------------------------------
        title1(10)='duction'
 c JAF pass in maxnag
        call neutron(title1,ntb,idb,atb,jp,ep,f,lzt,lat,lst,amt,el,
-     1 apro,q,e,x,nzb,jzb,azb,czb,jps,jl,astbc,nstbcb,nagb,erg,maxnag)
+     1 apro,q,e,x,nzb,jzb,azb,czb,jps,jl,astbc,nstbcb,nagb,erg,maxnag,
+     2 ee, cg, eal, nq)
       endif
 
 c--------------------------------------------------------------
@@ -5013,7 +5101,7 @@ c--------------------------------------------------------------
 c JAF pass in maxnag
       call neutron(title1,ntc,idc,atc,jpc,epc,fc,lztc,latc,lstc,amtc,
      1 elc,aproc,qc,ec,xc,nzc,jzc,azc,czc,jpsc,jlc,astbc,nstbcc,nagb,
-     2 erg,maxnag)
+     2 erg,maxnag, ee, cg, eal, nq)
 
 c----------------------------------
 c   Calculate total neutron source
@@ -5202,7 +5290,8 @@ c  Three Region Problem Neutron Source Subroutine (1/99)
 c=======================================================================
 
       subroutine neutron(title,nt,idt,at,jp,ep,f,lzt,lat,lst,amt,el,
-     1 apro,q,e,x,nz,jz,az,cz,jps,jl,ast,gtsan,nal,erg,maxnag)
+     1 apro,q,e,x,nz,jz,az,cz,jps,jl,ast,gtsan,nal,erg,maxnag, ee, 
+     2 cg, eal, nq)
 
 c----------
 c  Storage
@@ -5339,6 +5428,13 @@ c loop on target nuclides i
 c--------------------------
       alph=4.
       aneut=1.
+      gttqan=0.
+      qan=0.
+      etopan=0.
+      ebotan=0.
+      gtsan(:)=0.
+      ts(:)=0.
+      san(:)=0.
       do 1120 i=1,nt
        etpant=0.
        ebtant=0.
@@ -5541,8 +5637,12 @@ c     write(6,205) (frclev(il),il=1,jl(i))
       smga=0.
       if (nq.ne.0) write (8,240) jsm(lzt(i)),lat(i),amt(i)
       do 1097 n=1,nng
-      san(n)=san(n)/sbtqan
- 1097 smga=smga+san(n)
+        if(sbtqan.gt.0) then
+          san(n)=san(n)/sbtqan
+        else
+          san(n)=0
+        endif
+ 1097   smga=smga+san(n)
       if (erg.ge.1) then
       write (8,80) (san(n),n=nng,1,-1)
       elseif (erg.le.-1) then
@@ -5564,7 +5664,11 @@ c--------------------------------------
       do 1110 n=1,nng
  1110 tmga=tmga+tsan(n)
 c     fracgp=tmga/totqan
-      ebart=etpant/ebtant
+      if(ebtant.gt.0) then
+        ebart=etpant/ebtant
+      else
+        ebart=0.
+      endif
       etopan=etopan+etpant
       ebotan=ebotan+ebtant
       if(nq.le.1) go to 1120
