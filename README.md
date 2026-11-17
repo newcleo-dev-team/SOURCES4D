@@ -1,4 +1,6 @@
-# SOURCES4D
+# SOURCES4D - forked from LANL SOURCES4D
+
+This is the \textit{new}cleo's fork of the LANL SOURCES4D repository (https://github.com/lanl/SOURCES4D). The aim is to introduce bug fixes, improvements and additional features to the original code.
 
 SOURCES is a code for computing neutron source rates and spectra from spontaneous fission (including delayed neutrons) and (alpha,n) reactions in homogeneous materials and (alpha,n) reactions in single-interface and two-interface geometries. SOURCES4D is the latest release. It has the capability to compute sensitivities, as described in the documentation.
 
@@ -22,9 +24,19 @@ The code has been successfully compiled and tested on multiple systems using dif
 
 ## How to install
 
-To clone this repository and build the executable, please type the following commands:
+To clone this repository and build the executable, please type the following commands.
+
 ```bash
-git clone https://github.com/lanl/SOURCES4D.git
+git clone https://github.com/newcleo-dev-team/SOURCES4D.git
+```
+to use HTTPS, or
+
+```bash
+git clone git@github.com:newcleo-dev-team/SOURCES4D.git
+```
+to use SSH.
+
+```bash
 cd SOURCES4D
 make
 ```
@@ -57,6 +69,16 @@ User manual describing the new features in SOURCES4D.
 > Jeffrey A. Favorite and Sophie L. Weidenbenner, “Sensitivity of a Response to the Composition of an (alpha,n) Neutron Source,” _20th Topical Meeting of the Radiation Protection and Shielding Division of the American Nuclear Society (RPSD-2018)_, Santa Fe, New Mexico, August 26–31, 2018.
 - mc2019.proc_v_n_pp2335-2347.pdf
 > Jeffrey A. Favorite, “Second Derivative of an (alpha,n) Neutron Source with Respect to Constituent Isotope Densities,” _Proceedings of the International Conference on Mathematics and Computational Methods Applied to Nuclear Science and Engineering (M&C 2019)_, 2335–2347, Portland, Oregon, August 25–29, 2019.
+
+## How to Contribute
+
+Contributions to the project are welcome!
+
+- **Report bugs or suggest improvements:** Open an issue in this repository, providing a clear description of the problem or suggestion.
+- **Submit code changes:** Fork this repository, create a dedicated branch for your changes, and submit a pull request targeting the `main` branch of this repository. If you would like to contribute directly to the repository as a collaborator, please contact the repository owner to request access.
+- **Before submitting a pull request:** Make sure your changes do not break the existing build and provide a brief description of the modifications.
+
+For substantial changes, opening an issue first to discuss the proposed approach is recommended.
 
 ## Copyright
 
