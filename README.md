@@ -1,6 +1,6 @@
 # SOURCES4D - forked from LANL SOURCES4D
 
-This is the \textit{new}cleo's fork of the LANL SOURCES4D repository (https://github.com/lanl/SOURCES4D). The aim is to introduce bug fixes, improvements and additional features to the original code.
+This is the *new*cleo's fork of the LANL SOURCES4D repository (https://github.com/lanl/SOURCES4D). The aim is to introduce bug fixes, improvements and additional features to the original code.
 
 SOURCES is a code for computing neutron source rates and spectra from spontaneous fission (including delayed neutrons) and (alpha,n) reactions in homogeneous materials and (alpha,n) reactions in single-interface and two-interface geometries. SOURCES4D is the latest release. It has the capability to compute sensitivities, as described in the documentation.
 
