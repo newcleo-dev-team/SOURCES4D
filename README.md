@@ -20,8 +20,13 @@ samples--10 test inputs and outputs and utility scripts
 - GNU Fortran (`gfortran`)
 - GNU Make (`make`)
 
-The code has been successfully compiled and tested on multiple systems using different versions of GNU Fortran and GNU Make.
+The code has been successfully compiled and tested on the following systems:
 
+| Operating system | Architecture | GNU Fortran | GNU Make |
+|---|---|---|---|
+| Rocky Linux 9.8 (Blue Onyx) | x86_64 | 11.5.0 | 4.3 |
+| Rocky Linux 9.4 (Blue Onyx) | x86_64 | 11.4.1 | 4.3 |
+| Red Hat Enterprise Linux 8.8 (Ootpa) | x86_64 | 8.5.0 | 4.2.1 |
 ## How to install
 
 To clone this repository and build the executable, please type the following commands.
