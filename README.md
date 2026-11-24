@@ -7,8 +7,6 @@ SOURCES is a code for computing neutron source rates and spectra from spontaneou
 
 ## Directory Contents
 
-## Directory Contents
-
 ```text
 SOURCES4D/
 ├── src/        source code
