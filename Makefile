@@ -13,7 +13,7 @@ BIN_DIR = bin
 TARGET = $(BIN_DIR)/sources4d
 SRC    = src/sources4d.for
 
-.PHONY: all debug clean test templates
+.PHONY: all debug clean test
 
 all: $(BIN_DIR) $(TARGET)
 
@@ -31,6 +31,3 @@ clean:
 
 test:
 	bash samples/run_tests.sh
-
-templates:
-	bash samples/make_templates.sh
