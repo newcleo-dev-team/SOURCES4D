@@ -1913,7 +1913,7 @@ c JAF Eq. (32), except does not depend on the product level.
       do 1020 n=1,nng
  1020 s(n)=0.
 c JAF
-      if(sensitivity) then
+      if(sensitivity.and.l_sdata) then
         dq3c(1:nng,1:nagp1)=0.d0
         dq3s(1:nng,1:nagp1,1:nz)=0.d0
       endif
@@ -2003,7 +2003,7 @@ c           dqdf(1)=dqdf(1)-(ea-ep(lp1))/(ep(lp)-ep(lp1))*rr(m)
 c    1       *de/dele*sbtqan
 c           dqdf(2)=dqdf(2)+(ea-ep(lp1))/(ep(lp)-ep(lp1))*rr(m)
 c    1       *de/dele*sbtqan
-            if(sensitivity)then
+            if(sensitivity.and.l_sdata)then
               do j=1,nz
                 do mp=1,mm+1 ! index boundaries, not bins
                   if(mp.eq.m.or.mp.eq.m+1)then
@@ -4989,12 +4989,10 @@ c--------------------------------------
         itrans(i,ig)=ig
         sum1=0.001*(dea/2.)*((1./scxb(ig))+(1./scxb(ig+1)))/anumb
         if (sum1.gt.D(i)) goto 304
-  302   sum1=0
-        itrans(i,ig)=itrans(i,ig)+1
+  302   itrans(i,ig)=itrans(i,ig)+1
         if (itrans(i,ig).gt.nag) goto 304
-        do 303 m=ig,itrans(i,ig)
-         sum1=sum1+0.001*(dea/2.)*((1./scxb(m))+(1./scxb(m+1)))/anumb
-  303   continue
+        m=itrans(i,ig)
+        sum1=sum1+0.001*(dea/2.)*((1./scxb(m))+(1./scxb(m+1)))/anumb
         if (sum1.lt.D(i)) goto 302
   304   continue
   305 continue
