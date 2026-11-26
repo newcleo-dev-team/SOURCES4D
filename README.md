@@ -71,7 +71,14 @@ To run the test, after building the executable, run:
 ```bash
 make test
 ```
-Each test is run in its own subfolder of the `run_samples` folder. The results are compared with the reference outputs. The script prints `PASS` or `FAIL` for each test and a final summary. The detailed differences are written to the file `run_samples/diffs`.
+Each test is run in its own subfolder of the `run_samples` folder. The results are compared with the reference outputs. The script prints `PASS` or `FAIL` for each test and a final summary. The test results are also written to the file `run_samples/diffs`, together with the detailed differences.
+
+It is also possible to run only one or more tests, by listing them:
+```bash
+make test TESTS="testN"   # only testN
+make test TESTS="testN testM"   # only testN and testM
+```
+Each test can be written as `testN`, `N` or `testN/` (e.g. `test1`,`1` or `test1/`).
 
 ## Documentation
 
