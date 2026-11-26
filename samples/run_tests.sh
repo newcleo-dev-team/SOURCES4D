@@ -13,7 +13,7 @@
 #   make test                     # all the tests
 #   make test TESTS="test3"       # only test3
 #   make test TESTS="3"           # only test3 short form
-#   make test TESTS="test1 3"     # only test10 and test3
+#   make test TESTS="test1 3"     # only test1 and test3
 
 set -u
 
