@@ -1,6 +1,6 @@
 # Compiler and flags
 FC = gfortran
-FFLAGS = -std=legacy -fdefault-real-8 -fdefault-double-8 -fdefault-integer-8 -fbacktrace
+FFLAGS = -std=legacy -fdefault-real-8 -fdefault-double-8 -fdefault-integer-8 -fbacktrace -O2
 FDEBUG = -g -Wall -Wextra -O0 -fcheck=all -ffpe-trap=invalid,zero,overflow \
          -finit-real=snan -finit-integer=-999999 -finit-logical=true \
 		 -fsanitize=address,undefined
