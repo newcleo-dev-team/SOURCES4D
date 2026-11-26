@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
-# Run tests in SOURCES4D/run_samples and compare the results
-# with the templates stored in the sample folder.
+# Run the sample tests in SOURCES4D/run_samples and compare the results
+# with the reference outputs stored in the samples folder.
+#
+# Usage: run_tests.sh [testN ...]   (default: all the tests in samples/)
+# Examples:
+#   ./samples/run_tests.sh                 # all the tests
+#   ./samples/run_tests.sh test3           # only test3
+#   ./samples/run_tests.sh test1 test3     # more than one test
+#   ./samples/run_tests.sh 3 10            # short form: same as test3 test10
+# Usage with Makefile: make test TESTS="testN ..."  
+# Examples:
+#   make test                     # all the tests
+#   make test TESTS="test3"       # only test3
+#   make test TESTS="3"           # only test3 short form
+#   make test TESTS="test1 3"     # only test10 and test3
+
 set -u
 
 SAMPLES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -9,72 +23,115 @@ EXE="$ROOT_DIR/bin/sources4d"
 DATA_DIR="$ROOT_DIR/data"
 RUN_ROOT="$ROOT_DIR/run_samples"
 
-# Output files to be compared
-OUTPUT_FILES=(outp outp2 pdata tape6 tape7 tape8 tape9)
+# Output files written by the code
+OUTPUT_FILES=(outp outp2 pdata sdata tape6 tape7 tape8 tape9)
 
 [ -x "$EXE" ] || { echo "Executable not found: build the code first (make)." >&2; exit 1; }
 
-# Start from a clean run directory
-rm -rf "$RUN_ROOT"
+# Tests to run: the ones given as arguments, or all of them in natural order
+# accepts "N", "testN" and "testN/" for the same test
+mapfile -t available < <(cd "$SAMPLES_DIR" && ls -d test*/ 2>/dev/null | tr -d / | sort -V)
+[ "${#available[@]}" -gt 0 ] || { echo "No tests found in $SAMPLES_DIR." >&2; exit 1; }
+
+if [ "$#" -gt 0 ]; then
+  tests=()
+  invalid=()
+  for arg in "$@"; do
+    arg="${arg%/}"                 # accept "test3/"
+    name="test${arg#test}"         # accept "3" and "test3"
+# accepts only names that match an existing test (fixed-string match)
+    if printf '%s\n' "${available[@]}" | grep -qxF -- "$name"; then
+      tests+=("$name")
+    else
+      invalid+=("$arg")
+    fi
+  done
+# stop before running anything if some argument is not valid
+  if [ "${#invalid[@]}" -gt 0 ]; then
+    echo "Unknown test(s): ${invalid[*]}" >&2
+    echo "Available tests: ${available[*]}" >&2
+    echo "Usage: $0 [testN ...]   e.g. $0 test1 3" >&2
+    exit 2
+  fi
+else
+  tests=("${available[@]}")
+fi
+
+# Clean the whole run directory only when all the tests are run;
+# with a subset, only the directories of the selected tests are replaced.
+if [ "$#" -eq 0 ]; then
+  rm -rf "$RUN_ROOT"
+fi
 mkdir -p "$RUN_ROOT"
-DIFFS="$RUN_ROOT/diffs"
+DIFFS="$RUN_ROOT/diffs"      # refers to the last run only
 : > "$DIFFS"
+echo "# Tests run: ${tests[*]}" > "$DIFFS"
 echo "Results in: $RUN_ROOT"
 
 failed_tests=()
-total=0
 
-for template_dir in "$SAMPLES_DIR"/test*/; do
-  name="$(basename "$template_dir")"
+for name in "${tests[@]}"; do
+  template_dir="$SAMPLES_DIR/$name"
   run_dir="$RUN_ROOT/$name"
-  total=$((total + 1))
+  problems=()
 
-  echo "*** $name ***" >> "$DIFFS"
-  ok=1
-
-  # Copy tape1 from the template
-  mkdir -p "$run_dir"
-  if [ -e "$template_dir/tape1" ]; then
-    cp "$template_dir/tape1" "$run_dir/"
-  else
-    echo "  missing input file tape1" >> "$DIFFS"
-    ok=0
+  if [ ! -f "$template_dir/tape1" ]; then
+    echo "FAIL  $name (input file $template_dir/tape1 not found)"
+    failed_tests+=("$name")
+    continue
   fi
 
-  # Links to the data files
+  # Prepare the run directory: input file and links to the data files
+  rm -rf "$run_dir"          
+  mkdir -p "$run_dir"
+  cp "$template_dir/tape1" "$run_dir/"
   for n in 2 3 4 5; do
     ln -sf "$DATA_DIR/tape${n}.txt" "$run_dir/tape${n}"
   done
 
-  # Run
-  ( cd "$run_dir" && "$EXE" > run.log 2>&1 )
-  run_status=$?
-  [ "$run_status" -eq 0 ] || ok=0
+  # Run. On many errors the code stops with exit status 0 (e.g. "STOP Error
+  # in input"), so a run is considered successful only if it ends with
+  # "Normal Execution".
+  if ! ( cd "$run_dir" && "$EXE" > run.log 2>&1 ) ||
+     ! grep -q "Normal Execution" "$run_dir/run.log"; then
+    problems+=("abnormal termination: see $name/run.log")
+  fi
 
-  # Compare
-  for f in "${OUTPUT_FILES[@]}"; do
-    [ -e "$template_dir/$f" ] || continue
-    echo "diff $f (run) $f (template)" >> "$DIFFS"
-    if [ ! -e "$run_dir/$f" ]; then
-      echo "  missing output file" >> "$DIFFS"
-      ok=0
-    elif ! diff "$run_dir/$f" "$template_dir/$f" >> "$DIFFS"; then
-      ok=0
-    fi
-  done
+  # Compare each output file with the reference, in both directions.
+  # Skipped if the run failed: its outputs are not meaningful.
+  if [ "${#problems[@]}" -eq 0 ]; then
+    for f in "${OUTPUT_FILES[@]}"; do
+      ref="$template_dir/$f"
+      out="$run_dir/$f"
+      if [ -e "$ref" ] && [ ! -e "$out" ]; then
+        problems+=("$f missing")
+        echo "=== $name/$f: missing in the run" >> "$DIFFS"
+      elif [ ! -e "$ref" ] && [ -e "$out" ]; then
+        problems+=("$f not in reference")
+        echo "=== $name/$f: produced by the run, not present in the reference" >> "$DIFFS"
+      elif [ -e "$ref" ] && ! cmp -s "$ref" "$out"; then
+        problems+=("$f differs")
+        echo "=== $name/$f" >> "$DIFFS"
+        diff -u --label "reference $name/$f" --label "run $name/$f" "$ref" "$out" >> "$DIFFS"
+      fi
+    done
+  fi
 
-  if [ "$ok" -eq 1 ]; then
+  if [ "${#problems[@]}" -eq 0 ]; then
     echo "PASS  $name"
+    echo "PASS  $name" >> "$DIFFS"
   else
-    echo "FAIL  $name (see $run_dir/run.log or $DIFFS)"
+    printf -v msg '%s, ' "${problems[@]}"
+    echo "FAIL  $name (${msg%, })"
+    echo "FAIL  $name (${msg%, })" >> "$DIFFS"
     failed_tests+=("$name")
   fi
 done
 
 echo
-echo "$((total - ${#failed_tests[@]}))/$total tests identical to the templates."
+echo "$((${#tests[@]} - ${#failed_tests[@]}))/${#tests[@]} tests identical to the reference outputs."
 if [ "${#failed_tests[@]}" -gt 0 ]; then
   echo "Failed: ${failed_tests[*]}"
-  echo "Differences in: $DIFFS"
+  [ -s "$DIFFS" ] && echo "Differences in: $DIFFS"
   exit 1
 fi

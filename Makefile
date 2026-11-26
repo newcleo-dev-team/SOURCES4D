@@ -30,4 +30,4 @@ clean:
 	rm -f $(TARGET)
 
 test:
-	bash samples/run_tests.sh
+	bash samples/run_tests.sh $(TESTS)
