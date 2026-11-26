@@ -43,7 +43,7 @@ if [ "$#" -gt 0 ]; then
     if printf '%s\n' "${available[@]}" | grep -qxF -- "$name"; then
       tests+=("$name")
     else
-      invalid+=("$arg")
+      invalid+=("${arg:-'""'}") # show an empty argument as ""
     fi
   done
 # stop before running anything if some argument is not valid
@@ -64,7 +64,6 @@ if [ "$#" -eq 0 ]; then
 fi
 mkdir -p "$RUN_ROOT"
 DIFFS="$RUN_ROOT/diffs"      # refers to the last run only
-: > "$DIFFS"
 echo "# Tests run: ${tests[*]}" > "$DIFFS"
 echo "Results in: $RUN_ROOT"
 
@@ -75,14 +74,17 @@ for name in "${tests[@]}"; do
   run_dir="$RUN_ROOT/$name"
   problems=()
 
+  # Prepare the run directory: remove directory 
+  rm -rf "$run_dir" 
+
   if [ ! -f "$template_dir/tape1" ]; then
     echo "FAIL  $name (input file $template_dir/tape1 not found)"
+    echo "FAIL  $name (input file $template_dir/tape1 not found)" >> "$DIFFS"
     failed_tests+=("$name")
     continue
   fi
 
-  # Prepare the run directory: input file and links to the data files
-  rm -rf "$run_dir"          
+  # Prepare the run directory: input file and links to the data files         
   mkdir -p "$run_dir"
   cp "$template_dir/tape1" "$run_dir/"
   for n in 2 3 4 5; do
@@ -132,6 +134,6 @@ echo
 echo "$((${#tests[@]} - ${#failed_tests[@]}))/${#tests[@]} tests identical to the reference outputs."
 if [ "${#failed_tests[@]}" -gt 0 ]; then
   echo "Failed: ${failed_tests[*]}"
-  [ -s "$DIFFS" ] && echo "Differences in: $DIFFS"
+  grep -q '^===' "$DIFFS" && echo "Differences in: $DIFFS"
   exit 1
 fi
