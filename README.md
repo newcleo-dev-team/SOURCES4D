@@ -7,13 +7,16 @@ SOURCES is a code for computing neutron source rates and spectra from spontaneou
 
 ## Directory Contents
 
-src--source code
-
-data--data files
-
-docs--documentation
-
-samples--10 test inputs and outputs and utility scripts
+```text
+SOURCES4D/
+├── src/        source code
+├── data/       data files
+├── docs/       documentation
+├── samples/    test inputs with reference outputs and test script
+├── Makefile    
+├── LICENSE
+└── README.md
+```
 
 ## Requirements
 
@@ -27,6 +30,7 @@ The code has been successfully compiled and tested on the following systems:
 | Rocky Linux 9.8 (Blue Onyx) | x86_64 | 11.5.0 | 4.3 |
 | Rocky Linux 9.4 (Blue Onyx) | x86_64 | 11.4.1 | 4.3 |
 | Red Hat Enterprise Linux 8.8 (Ootpa) | x86_64 | 8.5.0 | 4.2.1 |
+
 ## How to install
 
 To clone this repository and build the executable, please type the following commands.
@@ -47,22 +51,38 @@ make
 ```
 Once the build is complete, the executable will be available at `SOURCES4D/bin/sources4d`.
 
-To run the code, execute the following command from a Linux terminal:
+To run the code, execute the following command from a Linux terminal, from the directory containing the input file:
 ```bash
-/path/to/SOURCES4D/bin/sources4d /path/to/tape1
+/path/to/SOURCES4D/bin/sources4d
 ```
-where `tape1` is the name of the input file. 
-**Note:** The folder containing the input file `tape1`, should also contain `tape2`, `tape3`, `tape4`, `tape5`. For more detailed information, refer to user manual included in the `docs` folder.
+
+**Note:** The input file must be named `tape1`. The input folder must also contain `tape2`, `tape3`, `tape4`, `tape5`, containing the nuclear data necessary to perform the calculation. For more detailed information, refer to user manual included in the `docs` folder.
 
 ## Usage
 
-For usage instruction, refer to the manual included in the `docs` folder.
+For usage instructions, refer to the manual included in the `docs` folder.
 
 The latest version of the code introduces an additional input parameter to enable or disable the sensitivity calculation. This parameter must be added in `card 2`, after the `idd`, `id`, `erg` parameters. It accepts two values: `0` to disable the sensitivity calculation and `1` to enable it. To ensure compatibility with older inputs, this parameter is optional and, if omitted, it defaults to `0`. The sensitivity calculation is only available for the homogeneous configuration and for the alpha beam configuration.
 
+## Running the tests
+The `samples` folder contains the tests, each with its input file and the reference outputs. 
+
+To run the test, after building the executable, run:
+```bash
+make test
+```
+Each test is run in its own subfolder of the `run_samples` folder. The results are compared with the reference outputs. The script prints `PASS` or `FAIL` for each test and a final summary. The test results are also written to the file `run_samples/diffs`, together with the detailed differences.
+
+It is also possible to run only one or more tests, by listing them:
+```bash
+make test TESTS="testN"   # only testN
+make test TESTS="testN testM"   # only testN and testM
+```
+Each test can be written as `testN`, `N` or `testN/` (e.g. `test1`,`1` or `test1/`).
+
 ## Documentation
 
-The documentation can be found in the the `docs` folder of the repository. It contains:
+The documentation can be found in the `docs` folder of the repository. It contains:
 
 - sources4c.pdf
 Still the main user manual for SOURCES4D.
@@ -81,7 +101,19 @@ Contributions to the project are welcome!
 
 - **Report bugs or suggest improvements:** Open an issue in this repository, providing a clear description of the problem or suggestion.
 - **Submit code changes:** Fork this repository, create a dedicated branch for your changes, and submit a pull request targeting the `main` branch of this repository. If you would like to contribute directly to the repository as a collaborator, please contact the repository owner to request access.
-- **Before submitting a pull request:** Make sure your changes do not break the existing build and provide a brief description of the modifications.
+- **Before submitting a pull request:** Make sure that after your changes the code still builds with `make` and that sample tests pass with `make test`, and provide a brief description of the modifications.
+If your changes intentionally modify the test results, the reference outputs of the tests in the `samples` directory must also be updated. This is done by proceeding as follows:
+  1. run `make test` and analyse the differences reported in `run_samples/diffs`.
+  2. For each test affected by the changes, copy the relevant output files from `run_samples/testN` to `samples/testN`:
+     ```bash
+     cp run_samples/testN/{outp,outp2,tape6,tape7,tape8,tape9,pdata} samples/testN/
+     ```
+     Only copy output files that are expected to change and are already present in the corresponding `samples/testN` directory. Do not add new output files, unless it is required by the modifications made.
+  3. Check with `git diff samples/` that only the expected files and values have changed.
+  4. Run `make test` again: all tests must pass.
+  5. In the pull request, list the updated reference outputs and explain why they changed.
+
+  When fixing a bug, if the issue is not covered by the existing tests, consider adding a new test case that reproduces the issue and demonstrates that it has been resolved.
 
 For substantial changes, opening an issue first to discuss the proposed approach is recommended.
 
